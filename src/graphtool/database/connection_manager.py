@@ -371,7 +371,8 @@ class MySqlDatabase( DBConnection ):
       var_string_len = len(var_string)
       while placement >= 0:
         placement_dict[placement] = var_name
-        my_string = my_string[:placement] + '%s' + my_string[placement+var_string_len:]
+        spaceadd = " "*(var_string_len-2)
+        my_string = my_string[:placement] + '%s'+spaceadd + my_string[placement+var_string_len:]
         placement = my_string.find( var_string )
     places = placement_dict.keys(); places.sort()
     my_tuple = ()

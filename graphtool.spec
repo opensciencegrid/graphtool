@@ -1,6 +1,6 @@
 %define name graphtool
 %define version 0.6.6
-%define release 17
+%define release 18
 %define _tmppath /var/tmp
 %define _unpackaged_files_terminate_build 0
 
@@ -36,6 +36,14 @@ rm -rf $RPM_BUILD_ROOT
 %files -f INSTALLED_FILES
 %defattr(-,root,root)
 %changelog
+
+* Fri Mar 14 2014 William B Hurst <wbhurst@cse.unl.edu>
+- Enhanced mysql database connector error handling as
+- requested by GratiaWeb-48
+
+* Fri Mar 14 2014 William B Hurst <wbhurst@cse.unl.edu>
+- updated and restructured rpm package management
+
 * Wed Feb 20 2013 Ashu Guru <aguru2@unl.edu>
 - Added space gaps for the query placeholders in connection_manager to avoid index clashes in find
 

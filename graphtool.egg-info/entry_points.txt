@@ -1,0 +1,6 @@
+[console_scripts]
+graphtool = graphtool.utilities.graphtool_cli:main
+
+[setuptools.installation]
+eggsecutable = graphtool.utilities.graphtool_cli:main
+

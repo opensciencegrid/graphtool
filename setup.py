@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/graphtool-0.6.6-py2.6.egg')
 
 try:
     import ez_setup
@@ -28,8 +29,10 @@ setup(
                         '*.cfg',
                         '*.xml',
                         '*.conf',
-                        'matplot*'
-                       ] 
+                        'matplot*',
+                        '*.spec',
+                        'READ*'
+                        ] 
                     },
     include_package_data = True,
 

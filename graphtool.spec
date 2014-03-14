@@ -1,6 +1,6 @@
 %define name graphtool
 %define version 0.6.6
-%define release 16
+%define release 17
 %define _tmppath /var/tmp
 %define _unpackaged_files_terminate_build 0
 

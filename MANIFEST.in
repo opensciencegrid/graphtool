@@ -1,3 +1,6 @@
-include examples/*
-include src/*
-include static_content/*
+include graphtool-0.6.6-py2.6.egg
+include graphtool.spec
+recursive-include static_content *.css *.js *.png
+recursive-include examples *
+recursive-include static_content *
+recursive-include src/graphtool *

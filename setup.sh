@@ -1,3 +1,4 @@
+#!/bin/bash
 
 export GRAPHTOOL_ROOT=~/projects/GraphTool
 export GRAPHTOOL_USER_ROOT=$GRAPHTOOL_ROOT/examples

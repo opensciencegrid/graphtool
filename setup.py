@@ -1,20 +1,40 @@
 #!/usr/bin/env python
 
-#from setuptools import setup, find_packages
-#from setuptools import find_packages
-from distutils.core import setup
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/graphtool-0.6.6-py2.6.egg')
+
+try:
+    import ez_setup
+    ez_setup.user_setuptools()
+except:
+    pass
+
+from setuptools import setup, find_packages
 
 setup(
-    name = "graphtool",
-    version = "0.6.6",
-    description = "CMS Common Graphing Package.",
-    author = "Brian Bockelman",
-    author_email = "bbockelm@math.unl.edu",
-    packages = ['graphtool', 'graphtool.utilities', 'graphtool.tools', 'graphtool.base', 'graphtool.web', 'graphtool.graphs', 'graphtool.database', 'graphtool.static_content', 'graphtool.xml'],
-    package_dir = {'graphtool.static_content': 'static_content', 'graphtool': 'src/graphtool'},
-    package_data = {"graphtool.static_content":['*']},
+    name = 'graphtool',
+    version = '0.6.6',
+    description = 'CMS Common Graphing Package',
+    author = 'Brian Bockelman',
+    author_email = "bbockelm@cse.unl.edu",
+    url="http://t2.unl.edu/documentation/gratia_graphs",
+
+    packages = ['graphtool', 'graphtool.utilities', 'graphtool.tools', 'graphtool.base', 'graphtool.web', \
+                    'graphtool.graphs', 'graphtool.database', 'graphtool.static_content', 'graphtool.xml'],
+    package_dir = {'graphtool.static_content':'static_content', 'graphtool':'src/graphtool'},
+    package_data = {'':['*.py',
+                        '*.txt',
+                        '*.in',
+                        '*.sh',
+                        '*.cfg',
+                        '*.xml',
+                        '*.conf',
+                        'matplot*',
+                        '*.spec',
+                        'READ*'
+                        ] 
+                    },
     include_package_data = True,
-    zip_safe = False,
 
     classifiers = [
           'Development Status :: 3 - Alpha',
@@ -30,7 +50,10 @@ setup(
     entry_points={
         'console_scripts': [
             'graphtool = graphtool.utilities.graphtool_cli:main'
+        ],
+        'setuptools.installation' : [
+            'eggsecutable = graphtool.utilities.graphtool_cli:main'
         ]
-    },
- 
-)
+    }
+
+    )

@@ -11,9 +11,10 @@ except:
   oracle_present = False
 
 try:
-  import MySQLdb
+  import mysql.connector
   mysql_present = True
-except Exception, e:
+  from mysql.connector import errorcode
+except Exception as e:
   mysql_present = False
 
 class DatabaseInfo( GraphToolInfo ):
@@ -57,7 +58,7 @@ class DatabaseInfo( GraphToolInfo ):
         assert curs.rowcount > 0
         curs.close()
         mysql_lock.release()
-    except Exception, e:
+    except Exception as e:
       #print e
       return False
     return True
@@ -118,33 +119,55 @@ class DatabaseInfo( GraphToolInfo ):
     else:
       info = args[0]
       self.info = info
-    if info['Interface'] == 'Oracle' and oracle_present == False:
-      raise Exception( "Could not import Oracle DB module.  Abort!" )
-    elif info['Interface'] == 'Oracle':
-      orcl = cx_Oracle.connect(info['AuthDBUsername'] + '/' + \
-        info['AuthDBPassword'] + '@' + info['Database'])
-      curs = orcl.cursor()
-      curs.execute('set role ' + info['AuthRole'] + ' identified by ' +
-        info['AuthRolePassword'])
-      curs.close()
-      return orcl
-    elif info['Interface'] == 'MySQL' and mysql_present == False:
-      raise Exception( "Could not import MySQL DB module.  Abort!" )
-    elif info['Interface'] == 'MySQL':
-      kw = {}
-      assignments = {'host':'Host', 'user':'AuthDBUsername',
-                     'passwd':'AuthDBPassword', 'db':'Database',
-                     'port':'Port' }
-      for key in assignments.keys():
-        if assignments[key] in info.keys():
-          kw[key] = info[ assignments[key] ]
-          if key == 'port':
-            kw[key] = int(kw[key])
-      conn = MySQLdb.connect( **kw )
-      return conn
-    else:
-      raise Exception( "Unknown DB interface module: %s.  Abort!" % info['Interface'] )
+    print "getConnection: info: %s" % info
 
+    if info['Interface'] == 'Oracle':
+      if oracle_present == False:
+        #condition: info['Interface'] == 'Oracle' and oracle_present == False:
+        raise Exception( "Could not import Oracle DB module.  Abort!" )
+      else:
+        cnstring = info['AuthDBUsername'] + '/' + info['AuthDBPassword'] + \
+            '@' + info['Database']
+        print "getConnection: cnstring: %s " % cnstring
+        try:
+          conn = cx_Oracle.connect(cnstring)
+          curs = conn.cursor()
+          curs.execute('set role ' + info['AuthRole'] + ' identified by ' +
+                       info['AuthRolePassword'])
+          curs.close()
+        except:
+          raise Exception( "FAILURE: cx_Oracle.connect(%s)" % cnstring )
+        else:
+          print "SUCCESS: cx_Oracle.connect(%s)" % cnstring
+
+    else:   #else info['Interface'] == 'MySQL':
+      if mysql_present == False:
+        #condition: info['Interface'] == 'MySQL' and mysql_present == False:
+        raise Exception( "Could not import mysql.connector DB module.  Abort!" )
+      else:
+        kw = {}
+        assignments = {'host':'Host', 'user':'AuthDBUsername',
+                       'passwd':'AuthDBPassword', 'db':'Database',
+                       'port':'Port' }
+        for key in assignments.keys():
+          if assignments[key] in info.keys():
+            kw[key] = info[ assignments[key] ]
+            if key == 'port':
+              kw[key] = int(kw[key])
+        print "getConnection: kw[key]: %s" % kw
+        try:
+          conn = mysql.connector.connect( **kw)
+        # expanded error checking - requested GratiaWeb-48
+        except mysql.connector.Error as e:
+          print "Error code: ", e.errono
+          print "SQLSTATE value: ", e.sqlstate
+          print "Error message: ", e.msg
+          print "Error: ", e
+          s = str(e)
+          print "Error: ", s
+        else:
+          print "SUCCESS: mysql.connector.connect(%s)" % assignments
+    return conn
 
 class DatabaseInfoV2( XmlConfig ):
 
@@ -165,10 +188,10 @@ class DatabaseInfoV2( XmlConfig ):
 
   def execute_sql( self, sql_string, sql_var, conn=None, **kw ):
 
+    conn = self.conn_manager.get_connection( conn )
     try:
-      conn = self.conn_manager.get_connection( conn )
       results = conn.execute_statement( sql_string, sql_var )
-    except Exception, e:
+    except Exception as e:
       if len(e.args) == 1:
         msg = str(e.args[0])
         m = re.search('Unknown database \'(.*)\'', msg)
@@ -183,6 +206,7 @@ class DatabaseInfoV2( XmlConfig ):
       traceback.print_exc( file=out )
       #print >> out, "Last Traceback:\n", last_traceback,'\n'
       raise Exception( out.getvalue() )
+    else:
+      print "execute_sql: SUCCESS: %s" % sql_string
 
     return results
-

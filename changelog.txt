@@ -1,4 +1,7 @@
 %changelog
+* Wed Feb 20 2013 Ashu Guru <aguru2@unl.edu>
+- Added space gaps for the query placeholders in connection_manager to avoid index clashes in find
+
 * Fri Jan 11 2013 Ashu Guru <aguru2@unl.edu>
 - Moving spec file to upstream
 

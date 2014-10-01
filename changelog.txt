@@ -1,4 +1,9 @@
 %changelog
+
+* Tue Sep 30 2014 Juan F. Mosquera <jmorales@fnal.gov>
+- modifications and program additions to resolve OSG
+- GRATIAWEB-58.
+
 * Wed Feb 20 2013 Ashu Guru <aguru2@unl.edu>
 - Added space gaps for the query placeholders in connection_manager to avoid index clashes in find
 

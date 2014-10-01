@@ -43,7 +43,7 @@ def make_int( *args, **kw ):
   return int(args[0])
 
 def make_float( *args, **kw ):
-  return int(args[0])
+  return float(args[0])
 
 def make_entry( row, cols, transform=None, row_size=None, **kw ):
   if row_size == None: row_size = len(row)
@@ -66,7 +66,10 @@ def add_data( old_data, row, results_cols ):
       elif type(row[results_cols[i]]) == array.array:
         old_data[i] += '\n' + row[results_cols[i]].tostring()
       else:
-        old_data[i] += row[results_cols[i]]
+        try :
+          old_data[i] += float(row[results_cols[i]])
+        except :
+          raise Exception('Non Contemplated Case for Type: '+type(row[results_cols[i]]))
   else:
     if type(row[results_cols[0]]) == types.StringType:
       try:

@@ -7,6 +7,7 @@ import datetime
 import threading
 import cStringIO
 import traceback
+import mysql_util
 
 from graphtool.tools.common import to_timestamp
 from graphtool.tools.cache import Cache
@@ -107,7 +108,7 @@ class ConnectionManager( XmlConfig ):
 
   def list_connection_names(selfself):
       return self.db_objs.keys()
-    
+
   def make_connection( self, name ):
     info = self.db_info[ name ]
     try:
@@ -278,6 +279,7 @@ class MySqlDatabase( DBConnection ):
         kw[key] = info[ assignments[key] ]
         if key == 'port':
           kw[key] = int(kw[key])
+    log.info("Atempting MySQL Connection %s" %kw)
     conn = MySQLdb.connect( **kw )
     curs = conn.cursor() 
     curs.execute( "set time_zone='+00:00'" )
@@ -326,9 +328,14 @@ class MySqlDatabase( DBConnection ):
             conn = self._conns[ i ]
           else:
             log.debug("Will make a new connection for pool %i." % i)
-            conn = self.make_connection()
-            self._conn_use[ i ] = True
-            self._conns[ i ] = conn
+            try:
+              conn = self.make_connection()
+              self._conn_use[ i ] = True
+              self._conns[ i ] = conn
+            except Exception, e:
+              conn = None
+              log.error("Error while connecting to the database : %s" % (e.args,))
+              self.conn_sema.release()
           break 
     finally:
       self.conn_lock.release()
@@ -362,7 +369,8 @@ class MySqlDatabase( DBConnection ):
   
   def _execute_statement( self, sql_string, sql_vars ):
     timer = -time.time()
-    my_string = str( sql_string )
+    # Reduce the use of regexp
+    my_string = mysql_util.reduce_regexp_usage(str(sql_string), sql_vars)
     sql_vars = dict( sql_vars )
     placement_dict = {}
     for var_name in sql_vars.keys():
@@ -380,9 +388,13 @@ class MySqlDatabase( DBConnection ):
       my_tuple += (sql_vars[placement_dict[place]],)
     curs = self.get_cursor()
     try:
-      curs.arraysize = 500
-      curs.execute( my_string, my_tuple )
-      results = curs.fetchall()
+      try:
+        curs.arraysize = 500
+        curs.execute( my_string, my_tuple )
+        results = curs.fetchall()
+      except MySQLdb.Error, e:
+        log.error("Error in Query execution:\n\tQUERY: \n%s\nQUERY-PREV:\n%s\n Error %d: %s" % (my_string,sql_string, e.args[0], e.args[1]))
+        raise e
     finally:
       self.release_cursor( curs )
       timer += time.time()

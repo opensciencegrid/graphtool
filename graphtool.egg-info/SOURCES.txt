@@ -40,6 +40,7 @@ src/graphtool/base/logger.py
 src/graphtool/base/xml_config.py
 src/graphtool/database/__init__.py
 src/graphtool/database/connection_manager.py
+src/graphtool/database/mysql_util.py
 src/graphtool/database/queries.py
 src/graphtool/database/query_handler.py
 src/graphtool/database/result_aggregator.py

@@ -2,7 +2,7 @@ GraphTool example README
 
 How to Run
 
-1.  Setup dependancies
+1.  Setup dependencies
 
 emacs setup.sh  # set variables for your environment
 source setup.sh

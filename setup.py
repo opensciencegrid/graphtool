@@ -21,7 +21,7 @@ setup(
 
     packages = ['graphtool', 'graphtool.utilities', 'graphtool.tools', 'graphtool.base', 'graphtool.web', \
                     'graphtool.graphs', 'graphtool.database', 'graphtool.static_content', 'graphtool.xml'],
-    package_dir = {'graphtool.static_content':'static_content', 'graphtool':'src/graphtool'},
+    package_dir = {'graphtool':'src/graphtool'},
     package_data = {'':['*.py',
                         '*.txt',
                         '*.in',

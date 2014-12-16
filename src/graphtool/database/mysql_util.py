@@ -81,7 +81,7 @@ def reduce_regexp_usage(query,variables):
       var_parts = variables[var_i].split('|')
       match = True
       for part_i in var_parts:
-        if re.match("\w+", part_i) is None:
+        if re.match("^\w+$", part_i) is None:
           match = False
           break
       if match:

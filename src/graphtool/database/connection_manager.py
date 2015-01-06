@@ -369,8 +369,7 @@ class MySqlDatabase( DBConnection ):
   
   def _execute_statement( self, sql_string, sql_vars ):
     timer = -time.time()
-    # Reduce the use of regexp
-    my_string = mysql_util.reduce_regexp_usage(str(sql_string), sql_vars)
+    my_string = str( sql_string )
     sql_vars = dict( sql_vars )
     placement_dict = {}
     for var_name in sql_vars.keys():
@@ -388,13 +387,9 @@ class MySqlDatabase( DBConnection ):
       my_tuple += (sql_vars[placement_dict[place]],)
     curs = self.get_cursor()
     try:
-      try:
-        curs.arraysize = 500
-        curs.execute( my_string, my_tuple )
-        results = curs.fetchall()
-      except MySQLdb.Error, e:
-        log.error("Error in Query execution:\n\tQUERY: \n%s\nQUERY-PREV:\n%s\n Error %d: %s" % (my_string,sql_string, e.args[0], e.args[1]))
-        raise e
+      curs.arraysize = 500
+      curs.execute( my_string, my_tuple )
+      results = curs.fetchall()
     finally:
       self.release_cursor( curs )
       timer += time.time()

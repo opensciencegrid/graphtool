@@ -1,5 +1,8 @@
 %changelog
 
+* Tue Jan 06 2015 Carl Edquist <edquist@cs.wisc.edu>
+- don't use mysql_util for now
+
 * Fri Nov 14 2014 Juan F. Mosquera <jmorales@fnal.gov>
 - modifications and program additions to resolve OSG
 - SOFTWARE-1671 and GRATIAWEB-60.

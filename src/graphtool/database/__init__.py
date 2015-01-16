@@ -14,7 +14,7 @@ try:
   import mysql.connector
   mysql_present = True
   from mysql.connector import errorcode
-except Exception as e:
+except Exception, e:
   mysql_present = False
 
 class DatabaseInfo( GraphToolInfo ):
@@ -58,7 +58,7 @@ class DatabaseInfo( GraphToolInfo ):
         assert curs.rowcount > 0
         curs.close()
         mysql_lock.release()
-    except Exception as e:
+    except Exception, e:
       #print e
       return False
     return True
@@ -158,7 +158,7 @@ class DatabaseInfo( GraphToolInfo ):
         try:
           conn = mysql.connector.connect( **kw)
         # expanded error checking - requested GratiaWeb-48
-        except mysql.connector.Error as e:
+        except mysql.connector.Error, e:
           print "Error code: ", e.errono
           print "SQLSTATE value: ", e.sqlstate
           print "Error message: ", e.msg
@@ -191,7 +191,7 @@ class DatabaseInfoV2( XmlConfig ):
     conn = self.conn_manager.get_connection( conn )
     try:
       results = conn.execute_statement( sql_string, sql_var )
-    except Exception as e:
+    except Exception, e:
       if len(e.args) == 1:
         msg = str(e.args[0])
         m = re.search('Unknown database \'(.*)\'', msg)

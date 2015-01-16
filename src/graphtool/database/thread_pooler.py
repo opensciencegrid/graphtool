@@ -55,6 +55,14 @@ class ThreadPoolTask( Thread ):
             self.task_done = True
         self.task_timeout_lock.release()
 
+    def join(self):
+        while self.task_start_time is None:
+            try:
+                time.sleep(0.3)
+            except:
+                log.error("Error while joining thread:\n%s"%traceback.format_exc())
+        super(ThreadPoolTask,self).join()
+
 """
   Utility class representing a Timeout Thread that checks the threads that are running for timeouts
 """
@@ -74,6 +82,7 @@ class ThreadPoolTimeoutChecker(Thread):
                 for active_thread_i in self.pooler.active_threads:
                     if active_thread_i.is_in_overtime():
                         active_thread_i.check_for_timeout()
+                self.pooler.timeout_call()
                 time.sleep(1)
             except:
                 log.error("Unexpected error in timeout thread checker call:\n%s" % (traceback.format_exc()))
@@ -125,6 +134,8 @@ class ThreadPool( object ):
             except:
                 log.error("Unexpected error while joining tasks:\n%s" % (traceback.format_exc()))
 
+    def timeout_call(self):
+        pass
 
     def stop_and_delete(self):
         self.join_all_requests()

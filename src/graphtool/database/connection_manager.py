@@ -251,7 +251,7 @@ class OracleDatabase( DBConnection ):
 
 class MySqlDatabase( DBConnection ):
 
-  pool_size = 16
+  pool_size = 20
 
   def __init__( self, *args, **kw ):
     super( MySqlDatabase, self ).__init__( *args, **kw )
@@ -287,6 +287,7 @@ class MySqlDatabase( DBConnection ):
     timeout = None
     if sql_vars.has_key("query_timeout"):
       timeout = int(sql_vars["query_timeout"])
+    results = []
     try:
       if timeout is None:
         results = self.pooler.execute_statement_sync(sql_string, sql_vars)
@@ -294,6 +295,8 @@ class MySqlDatabase( DBConnection ):
         results = self.pooler.execute_statement_sync(sql_string, sql_vars, timeout)
     except:
       log.error("Error in MySQL statement execution:\n%s"%(traceback.format_exc()))
+    if results is None:
+      results = []
     return results
 
 class PostgresDatabase( DBConnection ):

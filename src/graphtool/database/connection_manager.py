@@ -106,7 +106,7 @@ class ConnectionManager( XmlConfig ):
       return self.make_connection( name )
     return self.db_objs[ name ]
 
-  def list_connection_names(selfself):
+  def list_connection_names(self):
       return self.db_objs.keys()
 
   def make_connection( self, name ):
@@ -369,7 +369,7 @@ class MySqlDatabase( DBConnection ):
   
   def _execute_statement( self, sql_string, sql_vars ):
     timer = -time.time()
-    my_string = str( sql_string )
+    my_string = mysql_util.reduce_regexp_usage(str(sql_string), sql_vars)
     sql_vars = dict( sql_vars )
     placement_dict = {}
     for var_name in sql_vars.keys():

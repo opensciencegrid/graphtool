@@ -72,7 +72,7 @@ def reduce_regexp_usage(query,variables):
     if variables[var_i] == ".*":
       parentheses_pattern_esc = re.escape(") regexp :-"+str(index)+"-")
       result = re.search(parentheses_pattern_esc, query)
-      while result != None:
+      while result is not None:
         query = re.sub(parentheses_pattern_esc,")",query,1)
         query = replace_parentheses_block_to_the_left(query, result.start(), " true ")
         result = re.search(parentheses_pattern_esc, query)
@@ -81,7 +81,7 @@ def reduce_regexp_usage(query,variables):
       var_parts = variables[var_i].split('|')
       match = True
       for part_i in var_parts:
-        if re.match("\w+", part_i) is None:
+        if re.match("^\w+$", part_i) is None:
           match = False
           break
       if match:

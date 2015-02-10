@@ -44,7 +44,6 @@ src/graphtool/database/mysql_util.py
 src/graphtool/database/queries.py
 src/graphtool/database/query_handler.py
 src/graphtool/database/result_aggregator.py
-src/graphtool/database/thread_pooler.py
 src/graphtool/graphs/__init__.py
 src/graphtool/graphs/basic.py
 src/graphtool/graphs/common.py

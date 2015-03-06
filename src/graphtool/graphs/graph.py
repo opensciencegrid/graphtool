@@ -426,7 +426,7 @@ class Graph( object ):
         self.fig = fig
         self.canvas = canvas
 
-    def draw_error( self, error_text="An unexpected error has occurred!" ):
+    def draw_error( self, error_text="An error has occurred while processing your request!" ):
         """
         Draw an error graph; this is an error on the results
         """

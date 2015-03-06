@@ -9,11 +9,15 @@ import cStringIO
 import traceback
 import mysql_util
 
+from graphtool.database import MissingDBInfoException
 from graphtool.tools.common import to_timestamp
 from graphtool.tools.cache import Cache
 from graphtool.base.xml_config import XmlConfig
+from sys import exc_info
 
 log = logging.getLogger("GraphTool.Connection_Manager")
+
+SQL_QUERY_TIMEOUT_PARAM = "sql_query_timeout"
 
 try:  
     import cx_Oracle
@@ -101,7 +105,7 @@ class ConnectionManager( XmlConfig ):
         if self.default == None or len(self.default) == 0: raise Exception( "No default connection specified." )
         else: raise Exception( "Could not find connection named %s." % self.default )
     if name not in self.db_objs.keys():
-      raise ValueError( "Unknown connection name %s" % name )
+      raise MissingDBInfoException( "Unknown connection name %s" % name )
     if self.db_objs[ name ] == None:
       return self.make_connection( name )
     return self.db_objs[ name ]
@@ -163,8 +167,7 @@ class DBConnection( Cache ):
         self.remove_progress( hash_str )
         st = cStringIO.StringIO()
         traceback.print_exc( file=st )
-        raise Exception( "Exception caught while making SQL query:\n%s\n%s" % \
-            (str(e), st.getvalue()) )
+        raise e
       self.add_cache( hash_str, results )
       self.remove_progress( hash_str )
       return results
@@ -285,18 +288,17 @@ class MySqlDatabase( DBConnection ):
 
   def _execute_statement( self, sql_string, sql_vars):
     timeout = None
-    if sql_vars.has_key("query_timeout"):
-      timeout = int(sql_vars["query_timeout"])
+    if sql_vars.has_key(SQL_QUERY_TIMEOUT_PARAM):
+      timeout = int(sql_vars[SQL_QUERY_TIMEOUT_PARAM])
     results = []
     try:
       if timeout is None:
         results = self.pooler.execute_statement_sync(sql_string, sql_vars)
       else:
         results = self.pooler.execute_statement_sync(sql_string, sql_vars, timeout)
-    except:
+    except Exception, e:
       log.error("Error in MySQL statement execution:\n%s"%(traceback.format_exc()))
-    if results is None:
-      results = []
+      raise e
     return results
 
 class PostgresDatabase( DBConnection ):

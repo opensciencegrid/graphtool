@@ -1,8 +1,11 @@
 
 import types, cStringIO, datetime, calendar, time, threading, datetime
+import logging
 from graphtool.base.xml_config import XmlConfig, import_module
-from graphtool.database import DatabaseInfoV2
+from graphtool.database import DatabaseInfoV2, connection_manager
 from graphtool.tools.common import convert_to_datetime, to_timestamp
+
+log = logging.getLogger("GraphTool.Connection_Manager")
 
 # See if we can use the multiprocessing module in order to offload the CPU
 # heavy results parsing to another process
@@ -105,16 +108,33 @@ class SqlQuery( XmlConfig ):
 
     def query( *args, **my_kw ):
       sql_vars = inputs.filter_sql( my_kw )
+      # Hidden Parameter for SQL Query timeout
+      sql_query_param = None
+      if my_kw.has_key(connection_manager.SQL_QUERY_TIMEOUT_PARAM):
+        sql_query_param = my_kw[connection_manager.SQL_QUERY_TIMEOUT_PARAM]
+        try:
+          sql_query_param = int(sql_query_param)
+        except:
+          log.error("Error, could not cast the timeout '%s' to an integer."%sql_query_param)
+          sql_query_param = None
+      if sql_query_param:
+        sql_vars[connection_manager.SQL_QUERY_TIMEOUT_PARAM] = sql_query_param
       vars = results_inputs.filter( my_kw )
       vars = inputs.filter( vars )
       class Context: pass
       ctx = Context()
       vars['query'] = ctx
+      query_error = None
       if agg == None or 'conn' in vars.keys():
-        results = self.queries_obj.execute_sql( sql_string, sql_vars, **vars )
+        try:
+          results = self.queries_obj.execute_sql( sql_string, sql_vars, **vars )
+        except Exception, e:
+          query_error = e
       else:
         results = []
+        query_error = []
         result_lock = threading.Lock()
+        error_lock = threading.Lock()
         sem = threading.Semaphore( len(agg) )
         class QueryThread( threading.Thread ):
           def run( self ):
@@ -126,7 +146,9 @@ class SqlQuery( XmlConfig ):
               sem.release()
             except Exception, e:
               sem.release()
-              raise e
+              error_lock.acquire()
+              query_error.extend([e])
+              error_lock.release()
         for conn in agg:
           qt = QueryThread( )
           qt.conn = conn
@@ -144,7 +166,13 @@ class SqlQuery( XmlConfig ):
           results, metadata = function(results, **vars)
       for kw, val in self.metadata.items():
           if kw not in metadata:
-              metadata[kw] = val 
+              metadata[kw] = val
+      if query_error:
+          if isinstance(query_error, list):
+              metadata['error'] = query_error[0]
+          else:
+              metadata['error'] = query_error 
+      
       metadata['query'] = self 
       metadata['given_kw'] = inputs.filter( my_kw )
       metadata['sql_vars'] = sql_vars
@@ -324,7 +352,6 @@ class Sql( XmlConfig ):
     if base_sql == None:
       out = cStringIO.StringIO()
       print >> out, "Could not find chained object's SQL for %s" % self.dom.getAttribute('name')
-      print >> out, "\n%s\n" % str(ae)
       print >> out, base_query
       raise Exception( out.getvalue() )
     if type(base_sql) != Sql:
@@ -392,7 +419,7 @@ class Inputs( XmlConfig ):
       inputs[varname] = None
       for child in input.childNodes:
         if child.nodeType == child.TEXT_NODE:
-           inputs[varname] = str(child.data).strip() 
+          inputs[varname] = str(child.data).strip() 
       if varname in self.__dict__:
         inputs[varname] = getattr(self, varname)
       if input.getAttribute('type') != None and len(input.getAttribute('type')) > 0:
@@ -475,14 +502,12 @@ class Inputs( XmlConfig ):
     return kw   
 
   def filter_sql( self, kw ):
-    kw = self.filter( kw )
+    kw = self.filter( kw )      
     sql_kws = self.get_sql_kw()
     ret_kw = dict(kw)
-
     for key in kw.keys():
       if not (key in sql_kws):
         del ret_kw[key]
-
     return ret_kw
 
 

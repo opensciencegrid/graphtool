@@ -2,7 +2,7 @@
 import sys, time
 import logging
 import traceback
-from threading import Thread, RLock
+from threading import Thread, RLock, Lock
 
 
 log = logging.getLogger("GraphTool.Connection_Manager")
@@ -25,12 +25,23 @@ class ThreadPoolTask( Thread ):
         self.task_timeout_func = timeout_func
         self.task_timeout_func_args = timeout_func_args
         self.task_timeout_lock = RLock()
+        self.daemon = True
 
+    """
+      Returns true if the thread already started and
+      has been running for more time than the timeout.
+      Returns false if the timeout or start time has
+      not been registered.
+    """
     def is_in_overtime(self):
         if self.task_timeout is not None and self.task_start_time is not None:
             return self.task_timeout > 0 and time.time()-self.task_start_time > self.task_timeout
         return False
 
+    """
+      If the thread is in overtime, and there is timeout
+      function assigned in self.task_timeout_func 
+    """
     def check_for_timeout(self):
         self.task_timeout_lock.acquire()
         if not self.task_done:
@@ -94,7 +105,7 @@ class ThreadPool( object ):
 
     def __init__( self, size = 8):
         self.pool_size = size
-        self.thread_pool_lock = RLock()
+        self.thread_pool_lock = Lock()
         self.active_threads = []
         self.tasks_queue = []
         self.timeout_checker = ThreadPoolTimeoutChecker(self)
@@ -123,14 +134,14 @@ class ThreadPool( object ):
 
     def sync_active_thread_count( self ):
         self.thread_pool_lock.acquire()
-        count = len( self.active_threads )
+        count = len( self.active_threads ) + len( self.tasks_queue )
         self.thread_pool_lock.release()
         return count
 
     def join_all_requests( self ):
         while self.sync_active_thread_count( ) != 0:
             try:
-                time.sleep( 0.1 )
+                time.sleep(0.5)
             except:
                 log.error("Unexpected error while joining tasks:\n%s" % (traceback.format_exc()))
 

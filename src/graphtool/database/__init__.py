@@ -2,6 +2,18 @@
 import threading, sys, cStringIO, traceback, re
 from graphtool.base import GraphToolInfo
 from graphtool.base.xml_config import XmlConfig
+import logging
+
+class NoConnectionWithDBException(Exception):
+  plot_desc_text = "Could not connect with the Database."
+
+class QueryTimeoutException(Exception):
+  plot_desc_text = "The query execution timed out."
+
+class MissingDBInfoException(Exception):
+  plot_desc_text = "The Database connection information is not defined in the XML."
+
+log = logging.getLogger("GraphTool.Connection_Manager")
 
 try:
   import cx_Oracle
@@ -59,13 +71,11 @@ class DatabaseInfo( GraphToolInfo ):
         curs.close()
         mysql_lock.release()
     except Exception, e:
-      #print e
       return False
     return True
 
   def restoreConnection( self, conn ):
     if not self.testConnection( conn ):
-      #print "Test connection failed!"
       self.killConnection( conn )
       conn = self.getConnection()
     return conn
@@ -85,13 +95,13 @@ class DatabaseInfo( GraphToolInfo ):
     elif len(args) == 2:
       filename, section = args
     else:
-      print "Wrong number of arguments to getDbParams (contact developers!)"
+      log.critical("Wrong number of arguments to getDbParams (contact developers!)")
       sys.exit(-1)
     try:
       file = open( filename, 'r' )
     except:
-      print "Unable to open specified DBParam file %s" % filename
-      print "Check the path and the permissions."
+      log.critical( "Unable to open specified DBParam file %s" % filename)
+      log.critical( "Check the path and the permissions.")
       sys.exit(-1)
     rlines = file.readlines()
     info = {}
@@ -107,8 +117,8 @@ class DatabaseInfo( GraphToolInfo ):
       if start_section:
         info[tmp[0]] = tmp[1]
     if start_section == False:
-      print "Could not find section named: %s" % section
-      print "Check capitalization, contents of file.  Failing!"
+      log.critical( "Could not find section named: %s" % section )
+      log.critical( "Check capitalization, contents of file.  Failing!" )
       sys.exit(-1)
     self.info = info
     return info
@@ -119,7 +129,7 @@ class DatabaseInfo( GraphToolInfo ):
     else:
       info = args[0]
       self.info = info
-    print "getConnection: info: %s" % info
+    log.debug( "getConnection: info: %s" % info )
 
     if info['Interface'] == 'Oracle':
       if oracle_present == False:
@@ -128,7 +138,7 @@ class DatabaseInfo( GraphToolInfo ):
       else:
         cnstring = info['AuthDBUsername'] + '/' + info['AuthDBPassword'] + \
             '@' + info['Database']
-        print "getConnection: cnstring: %s " % cnstring
+        log.info( "getConnection: cnstring: %s " % cnstring )
         try:
           conn = cx_Oracle.connect(cnstring)
           curs = conn.cursor()
@@ -138,7 +148,7 @@ class DatabaseInfo( GraphToolInfo ):
         except:
           raise Exception( "FAILURE: cx_Oracle.connect(%s)" % cnstring )
         else:
-          print "SUCCESS: cx_Oracle.connect(%s)" % cnstring
+          log.info( "SUCCESS: cx_Oracle.connect(%s)" % cnstring)
 
     else:   #else info['Interface'] == 'MySQL':
       if mysql_present == False:
@@ -154,19 +164,19 @@ class DatabaseInfo( GraphToolInfo ):
             kw[key] = info[ assignments[key] ]
             if key == 'port':
               kw[key] = int(kw[key])
-        print "getConnection: kw[key]: %s" % kw
+        log.info( "getConnection: kw[key]: %s" % kw)
         try:
           conn = mysql.connector.connect( **kw)
         # expanded error checking - requested GratiaWeb-48
         except mysql.connector.Error, e:
-          print "Error code: ", e.errono
-          print "SQLSTATE value: ", e.sqlstate
-          print "Error message: ", e.msg
-          print "Error: ", e
+          log.error( "Error code: %s"% e.errono)
+          log.error(  "SQLSTATE value: %s"% e.sqlstate)
+          log.error(  "Error message: %s"% e.msg)
+          log.error(  "Error: %s"% e)
           s = str(e)
-          print "Error: ", s
+          log.error(  "Error: %s"% s)
         else:
-          print "SUCCESS: mysql.connector.connect(%s)" % assignments
+          log.info( "SUCCESS: mysql.connector.connect(%s)" % assignments)
     return conn
 
 class DatabaseInfoV2( XmlConfig ):
@@ -191,6 +201,12 @@ class DatabaseInfoV2( XmlConfig ):
     conn = self.conn_manager.get_connection( conn )
     try:
       results = conn.execute_statement( sql_string, sql_var )
+    except NoConnectionWithDBException, e:
+      raise e
+    except MissingDBInfoException, e:
+      raise e
+    except QueryTimeoutException, e:
+      raise e
     except Exception, e:
       if len(e.args) == 1:
         msg = str(e.args[0])
@@ -204,9 +220,6 @@ class DatabaseInfoV2( XmlConfig ):
       print >> out, "Used sql:\n%s" % sql_string
       print >> out, "Used vars:", sql_var, "\n"
       traceback.print_exc( file=out )
-      #print >> out, "Last Traceback:\n", last_traceback,'\n'
       raise Exception( out.getvalue() )
-    else:
-      print "execute_sql: SUCCESS: %s" % sql_string
 
     return results

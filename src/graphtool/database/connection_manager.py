@@ -9,11 +9,15 @@ import cStringIO
 import traceback
 import mysql_util
 
+from graphtool.database import MissingDBInfoException
 from graphtool.tools.common import to_timestamp
 from graphtool.tools.cache import Cache
 from graphtool.base.xml_config import XmlConfig
+from sys import exc_info
 
 log = logging.getLogger("GraphTool.Connection_Manager")
+
+SQL_QUERY_TIMEOUT_PARAM = "sql_query_timeout"
 
 try:  
     import cx_Oracle
@@ -101,7 +105,7 @@ class ConnectionManager( XmlConfig ):
         if self.default == None or len(self.default) == 0: raise Exception( "No default connection specified." )
         else: raise Exception( "Could not find connection named %s." % self.default )
     if name not in self.db_objs.keys():
-      raise ValueError( "Unknown connection name %s" % name )
+      raise MissingDBInfoException( "Unknown connection name %s" % name )
     if self.db_objs[ name ] == None:
       return self.make_connection( name )
     return self.db_objs[ name ]
@@ -163,8 +167,7 @@ class DBConnection( Cache ):
         self.remove_progress( hash_str )
         st = cStringIO.StringIO()
         traceback.print_exc( file=st )
-        raise Exception( "Exception caught while making SQL query:\n%s\n%s" % \
-            (str(e), st.getvalue()) )
+        raise e
       self.add_cache( hash_str, results )
       self.remove_progress( hash_str )
       return results
@@ -251,7 +254,7 @@ class OracleDatabase( DBConnection ):
 
 class MySqlDatabase( DBConnection ):
 
-  pool_size = 25
+  pool_size = 10
 
   def __init__( self, *args, **kw ):
     super( MySqlDatabase, self ).__init__( *args, **kw )
@@ -261,140 +264,41 @@ class MySqlDatabase( DBConnection ):
       self.module = MySQLdb
     else:
       raise Exception( "MySQL python module did not load correctly." )
+    host = 'localhost'
+    if self.info.has_key('Host'):
+      host = self.info['Host']
+    port = 3306
+    if self.info.has_key('Port'):
+      port = int(self.info['Port'])
+    database = None
+    if self.info.has_key('Database'):
+      database = self.info['Database']
+    user = None
+    if self.info.has_key('AuthDBUsername'):
+      user = self.info['AuthDBUsername']
+    passwd = None
+    if self.info.has_key('AuthDBPassword'):
+      passwd = self.info['AuthDBPassword']
+    self.pooler = mysql_util.MySQLThreadPooler(host, 
+                                               port, 
+                                               database, 
+                                               user, 
+                                               passwd, 
+                                               size=MySqlDatabase.pool_size)
 
-    self.conn_lock = threading.Lock()
-    self._conns = [ None for i in range( self.pool_size ) ]
-    self._conn_use = [ False for i in range( self.pool_size ) ]
-    self.conn_sema = threading.BoundedSemaphore( self.pool_size )
-    self.cursors = {}
-
-  def make_connection( self ):
-    kw = {}
-    info = self.info
-    assignments = {'host':'Host', 'user':'AuthDBUsername',
-                   'passwd':'AuthDBPassword', 'db':'Database',
-                   'port':'Port' }
-    for key in assignments.keys():
-      if assignments[key] in info.keys():
-        kw[key] = info[ assignments[key] ]
-        if key == 'port':
-          kw[key] = int(kw[key])
-    log.info("Atempting MySQL Connection %s" %kw)
-    conn = MySQLdb.connect( **kw )
-    curs = conn.cursor() 
-    curs.execute( "set time_zone='+00:00'" )
-    curs.close() 
-    if 'passwd' in kw:
-        kw['passwd'] = '*******'
-    log.debug("Made MySQL connection; params: %s" % kw)
-    return conn
-
-  def test_connection( self, i ):
-    if self._conns[ i ] == None:
-        return False 
-    timer = -time.time()
+  def _execute_statement( self, sql_string, sql_vars):
+    timeout = None
+    if sql_vars.has_key(SQL_QUERY_TIMEOUT_PARAM):
+      timeout = int(sql_vars[SQL_QUERY_TIMEOUT_PARAM])
+    results = []
     try:
-        conn = self._conns[ i ]
-        test = 'select 1+1'
-        curs = conn.cursor()
-        curs.execute( test )
-        curs.fetchall()
-        assert curs.rowcount > 0
-        curs.close()
-    except:
-        try:
-            conn.close()
-        except:
-            pass
-        timer += time.time()
-        log.debug("Connection %i took %.2f seconds to fail." % (i, timer))
-        return False
-    timer += time.time()
-    log.debug("Connection %i took %.2f seconds to pass." % (i, timer))
-    return True
-
-  def get_connection( self ):
-    self.conn_sema.acquire()
-    self.conn_lock.acquire()
-    log.debug("Acquired connection lock")
-    try:
-      for i in range(self.pool_size):
-        if self._conn_use[i] == False:
-          log.debug("Found unused connection; using %i." % i)
-          # Get connection, save it to self._conn[i]
-          if self.test_connection( i ):
-            log.debug("Unused connection %i still works." % i)
-            self._conn_use[ i ] = True
-            conn = self._conns[ i ]
-          else:
-            log.debug("Will make a new connection for pool %i." % i)
-            try:
-              conn = self.make_connection()
-              self._conn_use[ i ] = True
-              self._conns[ i ] = conn
-            except Exception, e:
-              conn = None
-              log.error("Error while connecting to the database : %s" % (e.args,))
-              self.conn_sema.release()
-          break 
-    finally:
-      self.conn_lock.release()
-      log.debug("Released connection lock")
-    return conn
-
-  def get_cursor( self ):
-    conn = self.get_connection()
-    curs = conn.cursor()
-    self.cursors[ curs ] = conn
-    return curs
-
-  def release_cursor( self, curs ):
-    curs.close()
-    self.release_connection( self.cursors[ curs ] )
-    del self.cursors[curs]
-    
-  def release_connection( self, conn ):
-    self.conn_lock.acquire()
-    try:
-      self.conn_sema.release()
-      i = -1
-      for i in range(self.pool_size):
-        if self._conns[ i ] == conn:
-          break
-      log.debug("Releasing connection %i" % i)
-      self._conns[i].close()
-      self._conn_use[i] = False
-    finally:
-      self.conn_lock.release()
-  
-  def _execute_statement( self, sql_string, sql_vars ):
-    timer = -time.time()
-    my_string = mysql_util.reduce_regexp_usage(str(sql_string), sql_vars)
-    sql_vars = dict( sql_vars )
-    placement_dict = {}
-    for var_name in sql_vars.keys():
-      var_string = ':' + var_name
-      placement = my_string.find( var_string )
-      var_string_len = len(var_string)
-      while placement >= 0:
-        placement_dict[placement] = var_name
-        spaceadd = " "*(var_string_len-2)
-        my_string = my_string[:placement] + '%s'+spaceadd + my_string[placement+var_string_len:]
-        placement = my_string.find( var_string )
-    places = placement_dict.keys(); places.sort()
-    my_tuple = ()
-    for place in places:
-      my_tuple += (sql_vars[placement_dict[place]],)
-    curs = self.get_cursor()
-    try:
-      curs.arraysize = 500
-      curs.execute( my_string, my_tuple )
-      results = curs.fetchall()
-    finally:
-      self.release_cursor( curs )
-      timer += time.time()
-      log.debug("Statement took %.2fs to execute. SQL:%s. Bind vars: %s." % \
-          (timer, sql_string, sql_vars))
+      if timeout is None:
+        results = self.pooler.execute_statement_sync(sql_string, sql_vars)
+      else:
+        results = self.pooler.execute_statement_sync(sql_string, sql_vars, timeout)
+    except Exception, e:
+      log.error("Error in MySQL statement execution:\n%s"%(traceback.format_exc()))
+      raise e
     return results
 
 class PostgresDatabase( DBConnection ):

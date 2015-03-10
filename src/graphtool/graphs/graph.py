@@ -334,7 +334,14 @@ class Graph( object ):
         self.coords = {}
         self.parse_data( )
         self.setup( )
-        if len( self.parsed_data.keys() ) > 0:
+        query_ex = getattr( self, 'error', None)
+        if query_ex:
+            exception_text = getattr(type(query_ex), 'plot_desc_text', None)
+            if exception_text:
+                self.draw_error(exception_text)
+            else:
+                self.draw_error()
+        elif len( self.parsed_data.keys() ) > 0:
             self.prepare_canvas( )
             self.draw( )
         else:
@@ -363,7 +370,8 @@ class Graph( object ):
 
     def setup(self):
         """
-        The only default setting up we do is to make the labels and pick colors.
+        The only default setting up we do is to make the labels and pick colors,
+        and setting up the title of the generated plot.
         """
         self.labels = getattr( self, 'labels', self.make_labels_common( self.parsed_data ) )
         keys = list( self.sort_keys(self.parsed_data) )
@@ -371,6 +379,13 @@ class Graph( object ):
         # data elements.
         #keys.reverse()
         self.colors = self.preset_colors(keys)
+        # Checks if there is metadata about an exception
+        if self.metadata.has_key("error"):
+            self.error = self.metadata["error"]
+        #Loads the title from the metadata
+        kw = dict( self.kw )
+        self.title = getattr( self, 'title', find_info('title', kw, self.metadata ) )
+        self.title = expand_string( self.title, self.kw )
 
     def make_labels_common(self, results):
         """
@@ -407,6 +422,23 @@ class Graph( object ):
         fig.set_dpi( dpi )
         fig.set_facecolor('white')
         fig.text( .5, .5, "No data returned by DB query.", horizontalalignment='center' )
+        self.ax = None
+        self.fig = fig
+        self.canvas = canvas
+
+    def draw_error( self, error_text="An error has occurred while processing your request!" ):
+        """
+        Draw an error graph; this is an error on the results
+        """
+        prefs = self.prefs
+        fig = Figure()
+        canvas = FigureCanvasAgg( fig )
+        dpi = prefs['width'] /prefs['width_inches']
+        height_inches = prefs['height'] / float(dpi)
+        fig.set_size_inches( prefs['width_inches'], height_inches )
+        fig.set_dpi( dpi )
+        fig.set_facecolor('white')
+        fig.text( .5, .5, error_text, horizontalalignment='center' ,color ="r")
         self.ax = None
         self.fig = fig
         self.canvas = canvas
@@ -923,10 +955,9 @@ class DBGraph( Graph ):
          """
         super( DBGraph, self ).setup()
 
-        results = self.results; metadata = self.metadata
-        kw = dict( self.kw )
+        metadata = self.metadata
         self.vars = metadata.get('sql_vars',{})
-        self.title = getattr( self, 'title', find_info('title', kw, metadata ) )
+        kw = dict( self.kw )
         column_names = find_info( 'column_names', kw, metadata )
         column_units = find_info( 'column_units', kw, metadata )
         if len(str(column_units)) > 0:
@@ -942,7 +973,6 @@ class DBGraph( Graph ):
         if len(self.xlabel) == 0:
             self.xlabel = find_info( 'xlabel', kw, metadata )
         self.kind  = find_info( 'pivot_name', kw, metadata )
-        self.title = expand_string( self.title, self.vars )
 
 class PivotGroupGraph( Graph ):
 

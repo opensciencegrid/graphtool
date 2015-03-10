@@ -1314,7 +1314,9 @@ class PieGraph( PivotGraph ):
             ):
             
         x = numpy.array(x, numpy.float64)
-
+        # Change to absolute value to avoid not well drawn plots
+        # when negative values are included
+        x = numpy.absolute(x)
         sx = float(numpy.sum(x))
         if sx>1: x = numpy.divide(x,sx)
             

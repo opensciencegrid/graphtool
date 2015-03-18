@@ -4,7 +4,7 @@ from graphtool.web import WebHost
 import cherrypy
 
 if __name__ == '__main__':
-  WebHost( file='$CONFIG_ROOT/website.xml' ) 
-  cherrypy.server.quickstart()
+  WebHost( file='../config/website.xml' ) 
   cherrypy.engine.start() 
+  cherrypy.engine.block()
 

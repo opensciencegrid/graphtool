@@ -1,6 +1,6 @@
 <graphtool-config>
 
-  <import file="$CONFIG_ROOT/example_queries.xml" />
+  <import module="example.config" data_file="example_queries.xml" />
 
   <import module="graphtool.graphs.graph">Grapher</import>
   <import module="graphtool.graphs.basic">BasicStackedBar</import>

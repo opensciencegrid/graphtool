@@ -3,8 +3,8 @@ import os
 import mimetools
 import mimetypes
 mimetypes.init()
-mimetypes.types_map['.dwg']='image/x-dwg'
-mimetypes.types_map['.ico']='image/x-icon'
+mimetypes.add_type('image/x-dwg', '.dwg')
+mimetypes.add_type('image/x-icon', '.ico')
 
 import cherrypy
 from graphtool.base.xml_config import XmlConfig
@@ -198,35 +198,4 @@ class StaticModule(object):
         content_type = self.mimetypes.types_map.get(ext, "text/plain")
         cherrypy.response.headers["Content-Type"] = content_type
         return self.rs(self.module, path).read()
-
-class HelloWorld(object):
-
-  static = cherrypy.tools.staticdir.handler(section='static', root=os.getcwd(),
-                                     dir='static_content')
-
-  def __init__( self, *args, **kw ): pass
-
-  def condor( self, *args, **kw ):
-    r = os.popen( 'condor_q -xml' )
-    lines = r.readlines()
-    xml_string = ''
-    found_header = False
-    for line in lines:
-      if line.startswith('--'):
-        found_header = True
-        continue
-      if found_header:
-        if line.startswith('<!DOCTYPE'):
-          continue
-        xml_string += line 
-        if line.startswith('<?xml version'):
-          xml_string += '<?xml-stylesheet type="text/xsl" href="/static/content/condor_results.xsl"?>\n'
-    cherrypy.response.headers['Content-Type'] = 'text/xml'
-    return xml_string
-
-  condor.exposed = True
-
-  def index(self):
-     return "Hello World! (Test Case)"
-  index.exposed = True
 

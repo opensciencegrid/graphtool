@@ -1,0 +1,22 @@
+
+<graphtool-config>
+
+  <import module="graphtool.web"> WebHost, StaticContent </import>
+  <import module="example.config" data_file="example_graphs.xml" />
+
+  <class name="static" type="StaticContent">
+    <module name="content"> graphtool.static_content </module>
+  </class>
+
+
+
+  <class name="web" type="WebHost">
+    <mount location="/graphs" content="image/png"> <instance name="example_grapher"/> </mount>
+    <mount location="/xml" content="text/xml"> <instance name="query_xml" /> </mount>
+    <instance name="static" />
+
+    <config module="example.config">prod.conf</config>
+  </class>
+
+</graphtool-config>
+

@@ -20,7 +20,7 @@ setup(
     url="http://t2.unl.edu/documentation/gratia_graphs",
 
     packages = ['graphtool', 'graphtool.utilities', 'graphtool.tools', 'graphtool.base', 'graphtool.web', \
-                    'graphtool.graphs', 'graphtool.database', 'graphtool.static_content', 'graphtool.xml'],
+                    'graphtool.graphs', 'graphtool.database', 'graphtool.static_content'],
     package_dir = {'graphtool':'src/graphtool'},
     package_data = {'':['*.py',
                         '*.txt',

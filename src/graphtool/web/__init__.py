@@ -133,7 +133,7 @@ class WebHost( XmlConfig ):
     for instance in self.sub_objects:
         if hasattr(instance, 'kill'):
             instance.kill()
- 
+
 class StaticContent( XmlConfig ):
 
     _cp_config = {} 
@@ -148,8 +148,8 @@ class StaticContent( XmlConfig ):
             abspath=self._directory_paths[cherrypy.request.wsgi_environ['SCRIPT_NAME']]
         except:
             abspath="/"
-        file = os.path.join(abspath,*args)
-        return cherrypy.lib.static.serve_file(file)
+        file_to_serve = os.path.join(abspath,*args)
+        return cherrypy.lib.static.serve_file(file_to_serve)
 
     def parse_dom( self ):
         super( StaticContent, self ).parse_dom()
@@ -162,7 +162,6 @@ class StaticContent( XmlConfig ):
             mod_name = str(mod_name_dom.data).strip()
             obj = StaticModule(mod_name)
             setattr(self, name, obj)
-            getattr(self, name).exposed = True
         for directory_dom in self.dom.getElementsByTagName('directory'):
             name = directory_dom.getAttribute('name')
             location = directory_dom.getAttribute('location')
@@ -176,7 +175,6 @@ class StaticContent( XmlConfig ):
             dir_name = self.expand_path(dir_name)
             self._directory_paths[location]=dir_name
 
-
 class StaticModule(object):
     _cp_config = {}
     exposed = True
@@ -187,15 +185,44 @@ class StaticModule(object):
         self.mimetypes = __import__("mimetypes")
         self.mimetypes.types_map['.dwg']='image/x-dwg'
         self.mimetypes.types_map['.ico']='image/x-icon'
+        sub_mods = self.get_module_sub_modules(self.module)
+        for sub_mod_i in sub_mods:
+          stat_mod = StaticModule(self.module+'.'+sub_mod_i)
+          setattr(self, sub_mod_i, stat_mod)
 
+    def get_module_sub_modules(self,mod_name):
+      import pkgutil
+      import sys, types
+      try:
+          aMod = sys.modules[mod_name]
+          if not isinstance(aMod, types.ModuleType):
+              raise KeyError
+      except KeyError:
+          # The last [''] is very important!
+          aMod = __import__(mod_name, globals(), locals(), [''])
+          sys.modules[mod_name] = aMod
+      sub_mods = []
+      for importer, modname, ispkg in pkgutil.iter_modules(aMod.__path__):
+        if ispkg:
+          sub_mods.append(modname)
+      return sub_mods
+    
+    @cherrypy.expose
+    def index(self):
+      return "Module Directory"
+    
     def __call__(self, path):
         # Snippet from CherryPy
         # Set content-type based on filename extension
-        ext = ""
-        i = path.rfind('.')
-        if i != -1:
-            ext = path[i:].lower()
-        content_type = self.mimetypes.types_map.get(ext, "text/plain")
-        cherrypy.response.headers["Content-Type"] = content_type
-        return self.rs(self.module, path).read()
+        try:
+          ext = ""
+          i = path.rfind('.')
+          if i != -1:
+              ext = path[i:].lower()
+          content_type = self.mimetypes.types_map.get(ext, "text/plain")
+          cherrypy.response.headers["Content-Type"] = content_type
+          return self.rs(self.module, path).read()
+        except:
+          raise cherrypy.HTTPError(404,"File not found!")
+
 

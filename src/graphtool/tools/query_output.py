@@ -61,7 +61,7 @@ class XmlGenerator( QueryHandler ):
 
   def handle_list( self, *args, **kw ):
     output = cStringIO.StringIO()
-    gen = self.startDocument( output )
+    gen = self.startDocument( output , "XML Queries")
     base_url = ''
     if 'base_url' in self.metadata:
       base_url = self.metadata['base_url']
@@ -76,7 +76,7 @@ class XmlGenerator( QueryHandler ):
         name = "Query"
       gen.startElement("pagelist",{'name':name, 'id':str(i)})
       for page in query_obj.commands.keys():
-        gen.characters("\t\t\n")
+        gen.characters("\n\t\t")
         attrs = {}
         my_page = self.known_commands[page]
         if 'title' in my_page.__dict__.keys():
@@ -86,13 +86,13 @@ class XmlGenerator( QueryHandler ):
         gen.startElement('page',attrs)
         gen.characters( base_url + page )
         gen.endElement('page')
-      gen.characters("\t\n")
+      gen.characters("\n\t")
       gen.endElement("pagelist")
-      gen.characters("\t\n")
+      gen.characters("\n\t")
     self.endDocument( gen )
     return output.getvalue()
 
-  def startDocument( self, output, encoding='UTF-8' ):
+  def startDocument( self, output, html_title, encoding='UTF-8' ):
     gen =  XMLGenerator( output, encoding )
     gen.startDocument()
     try:
@@ -107,17 +107,25 @@ class XmlGenerator( QueryHandler ):
     output.write('<!DOCTYPE graphtool-data>\n')
     gen.startElement('graphtool',{})
     gen.characters("\n\t")
+    gen.startElement( 'attr',{'name':'static_base_url'} )
+    gen.characters( static_location )
+    gen.endElement( 'attr' )
+    gen.characters("\n\t")
+    gen.startElement('html_title',{})
+    gen.characters(html_title)
+    gen.endElement('html_title')
+    gen.characters("\n\t")
     return gen
 
   def startPlot( self, output, results, metadata, encoding='UTF-8' ):
-    gen = self.startDocument( output, encoding )
+    title = expand_string( metadata.get('title',''), metadata.get('sql_vars','') )
+    gen = self.startDocument( output,("Results of Query: %s"%title), encoding )
     query_attrs = {}
     name = metadata.get('name','')
     if name and len(name) > 0:
       query_attrs['name'] = name
     gen.startElement('query', query_attrs)
     gen.characters("\n\t\t")
-    title = expand_string( metadata.get('title',''), metadata.get('sql_vars','') )
     if title and len(title) > 0:
       gen.startElement('title',{})
       gen.characters( title )
@@ -152,17 +160,6 @@ class XmlGenerator( QueryHandler ):
     my_base_url = self.metadata.get('base_url','')
     gen.startElement( 'attr',{'name':'base_url'} )
     gen.characters( my_base_url )
-    gen.endElement( 'attr' )
-    gen.characters('\n\t\t')
-    try:
-        static_location = '/static/content'
-        static_object = self.globals['static']
-        static_location = static_object.metadata.get('base_url','/static')
-        static_location += '/content'
-    except:
-        pass
-    gen.startElement( 'attr',{'name':'static_base_url'} )
-    gen.characters( static_location )
     gen.endElement( 'attr' )
     gen.characters('\n\t\t')
     self.write_graph_url( results, metadata, gen, base_url=base_url )
@@ -336,7 +333,7 @@ class XmlGenerator( QueryHandler ):
     #if attrs['pivot'] == 'Link':
     #  return 'link', {'from':pivot[0],'to':pivot[1]}
     #else:
-       return 'pivot',{'name':str(pivot)}
+      return 'pivot',{'name':str(pivot)}
 
   def addData( self, data, gen, coords=None, **kw ):
         if type(data) != types.TupleType:

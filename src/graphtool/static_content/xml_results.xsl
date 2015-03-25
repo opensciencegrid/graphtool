@@ -3,65 +3,30 @@
 <xsl:stylesheet version="1.0"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
-<xsl:output method="html" />
+<xsl:output method="html"/>
 
 <xsl:template match="/">
   <xsl:apply-templates />
 </xsl:template>
 
 <xsl:template name="split-text">
-<xsl:param name="arg1"/>
-<xsl:choose>
-<xsl:when test="contains($arg1,'&#10;')">
-<xsl:value-of select="substring-before($arg1,'&#10;')"/><br/>
-<xsl:call-template name="split-text">
-<xsl:with-param name="arg1">
-<xsl:value-of select="substring-after($arg1,'&#10;')"/>
-</xsl:with-param>
-</xsl:call-template>
-</xsl:when>
-<xsl:otherwise>
-<xsl:value-of select="$arg1"/>
-</xsl:otherwise>
-</xsl:choose>
+  <xsl:param name="arg1"/>
+  <xsl:choose>
+    <xsl:when test="contains($arg1,'&#10;')">
+      <xsl:value-of select="substring-before($arg1,'&#10;')"/><br/>
+      <xsl:call-template name="split-text">
+        <xsl:with-param name="arg1">
+          <xsl:value-of select="substring-after($arg1,'&#10;')"/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="$arg1"/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
-<xsl:template match="/graphtool/query">
-  <html xmlns="http://www.w3.org/1999/xhtml">
-    <head>
-      <xsl:variable name="static_base_url" select="attr[@name='static_base_url']" />
-      <title> Results of Query: <xsl:value-of select="title"/> </title>
-      <link rel="stylesheet" href="/static/content/style.css" type="text/css">
-        <xsl:attribute name="href"> <xsl:value-of select="$static_base_url"/>/style.css </xsl:attribute>
-      </link>
-
-      <script type="text/javascript">
-          function toggleBox( divId, state ) {
-            var obj = document.getElementById( divId ).style;
-            obj.visibility = state ? "visible" : "hidden";
-            obj.display = state ? "block" : "none";
-          }
-
-          function toggleBoxSwitch( divId, state ) {
-            var obj = document.getElementById( divId ).style;
-            if (state == 2) {
-                if (obj.visibility == "visible")
-                    obj.visibility = "hidden";
-                else
-                    obj.visibility = "visible";
-            } else 
-                obj.visibility = state ? "visible" : "hidden";
-          }
-
-          function testAlert( arg ) { alert( arg ); }
-      </script>
-    </head>
-    <body>
-<xsl:variable name="static_base_url2" select="attr[@name='static_base_url']" />
-      <script type="text/javascript" src="/static/content/wz_tooltip.js">
-        <xsl:attribute name="src"> <xsl:value-of select="$static_base_url2"/>/wz_tooltip.js </xsl:attribute>
-      </script>
-
+<xsl:template name="query">
 
       <xsl:call-template name="navtree">
           <xsl:with-param name="base_url" select="attr[@name='base_url']" />
@@ -135,11 +100,58 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
           <xsl:for-each select="sqlvars/var">
             <tr>
               <td> <xsl:value-of select="@name" /> </td>
-              <td> <input type="text" name="{@name}" value="{.}" /> </td>
+              <td> <input type="text" id="{@name}" name="{@name}" value="{.}" /> </td>
             </tr>
           </xsl:for-each>
         </table>
         <input type="submit" value="Query again"/>
+        <script>
+          function setDateTimePicker(inp_id){
+            var inp_tag = $('#'+inp_id);
+            var prev_val = inp_tag.val();
+            inp_tag.datetimepicker({
+              format:'Y-m-d H:i:s',
+              mask:'9999-19-39 29:59:59'
+            });
+          }
+          function setSpanPicker(inp_id){
+            var inp_tag = $('#'+inp_id);
+            var autocomplete_vals = [
+                                      {
+                                        label:"3600 (1 Hour)",
+                                        value:3600
+                                      },
+                                      {
+                                        label:"86400 (1 Day)",
+                                        value:86400
+                                      },
+                                      {
+                                        label:"604800 (1 Week)",
+                                        value:604800
+                                      },
+                                      {
+                                        label:"2592000 (1 Month, 30 days)",
+                                        value:2592000
+                                      }
+                                     ];
+            inp_tag.autocomplete({
+              minLength: 0,
+              source: autocomplete_vals
+            });
+            inp_tag.focus(function(){
+                inp_tag.autocomplete( "search", "" );
+            });
+            inp_tag.click(function(){
+                inp_tag.autocomplete( "search", "" );
+            });
+            inp_tag.keyup(function(){
+                inp_tag.val(inp_tag.val().replace(/[^0-9]/g,''))
+            });
+          }
+          setDateTimePicker('starttime');
+          setDateTimePicker('endtime');
+          setSpanPicker('span');
+        </script>
       </form>
 
       <xsl:variable name="csv_url" select="concat(translate(attr[@name='base_url'], 'xml', 'csv'), '/', @name, '?', substring-after(url, '?'))"/>
@@ -267,34 +279,24 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       <a href="#" onClick="toggleBox('results',0); toggleBox('results_button',1); return false;">Hide table of results</a>
 
       </div>
-
-    </body>
-  </html>
 </xsl:template>
 
-<xsl:template match="/graphtool/pagelist">
-
-<html>
-  <head>
-    <title> <xsl:value-of select="@name" /> </title>
-  </head>
-  <body>
-    <h1> <xsl:value-of select="@name" /> </h1>
-    <ul>
-      <xsl:for-each select="page">
-        <xsl:choose>
-          <xsl:when test="@title">
-            <li> <a href="{.}"><xsl:value-of select="@title" /></a> </li>
-          </xsl:when>
-          <xsl:otherwise>
-            <li> <a href="{.}"><xsl:value-of select="." /></a> </li>
-          </xsl:otherwise>
-        </xsl:choose>
-      </xsl:for-each>
-    </ul>
-  </body>
-</html>
-
+<xsl:template name="pagelist">
+    <div class="accordion">
+      <h3> <xsl:value-of select="@name" /> </h3>
+      <div>
+        <xsl:for-each select="page">
+          <xsl:choose>
+            <xsl:when test="@title">
+              <a href="{.}"><xsl:value-of select="@title" /></a><br/>
+            </xsl:when>
+            <xsl:otherwise>
+              <a href="{.}"><xsl:value-of select="." /></a><br/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:for-each>
+      </div>
+    </div>
 </xsl:template>
 
 <xsl:template name="navtree">
@@ -332,6 +334,95 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   </xsl:for-each>
 
+</xsl:template>
+
+
+<xsl:template match="/graphtool">
+
+<!-- XML Variables -->
+<xsl:variable name="static_base_url" select="attr[@name='static_base_url']" />
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Title -->
+    <title><xsl:value-of select="html_title"/></title>
+    
+    <!-- Stylesheets loading -->
+    <link rel="stylesheet" type="text/css">
+      <xsl:attribute name="href"> <xsl:value-of select="$static_base_url"/>/style.css</xsl:attribute>
+    </link>
+    <link rel="stylesheet" type="text/css">
+      <xsl:attribute name="href"> <xsl:value-of select="$static_base_url"/>/js/jquery/jquery-ui.min.css</xsl:attribute>
+    </link>
+    <link rel="stylesheet" type="text/css">
+      <xsl:attribute name="href"> <xsl:value-of select="$static_base_url"/>/js/jquery/jquery.datetimepicker.css</xsl:attribute>
+    </link>
+    
+    <!-- Javascript files loading -->
+    <script type="text/javascript">
+      <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/jquery/jquery-1.11.2.min.js</xsl:attribute>
+    </script>
+    <script type="text/javascript">
+      <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/jquery/jquery-ui.min.js</xsl:attribute>
+    </script>
+    <script type="text/javascript">
+      <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/jquery/jquery.datetimepicker.js</xsl:attribute>
+    </script>
+    
+    <!-- Custom Javascript  -->
+    <script type="text/javascript">
+      function toggleBox( divId, state ) {
+        var obj = document.getElementById( divId ).style;
+        obj.visibility = state ? "visible" : "hidden";
+        obj.display = state ? "block" : "none";
+      }
+
+      function toggleBoxSwitch( divId, state ) {
+        var obj = document.getElementById( divId ).style;
+        if (state == 2) {
+          if (obj.visibility == "visible")
+            obj.visibility = "hidden";
+          else
+            obj.visibility = "visible";
+        } else
+          obj.visibility = state ? "visible" : "hidden";
+      }
+
+      function testAlert( arg ) { alert( arg ); }
+    </script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      <xsl:attribute name="src"> <xsl:value-of select="$static_base_url"/>/wz_tooltip.js</xsl:attribute>
+    </script>
+  
+    <xsl:choose>
+      <xsl:when test="query">
+        <xsl:for-each select="query">
+          <xsl:call-template name="query">
+          </xsl:call-template>
+        </xsl:for-each>
+      </xsl:when>
+      <xsl:when test="pagelist">
+        <xsl:for-each select="pagelist">
+          <xsl:call-template name="pagelist">
+          </xsl:call-template>
+        </xsl:for-each>
+        <script>
+          $( ".accordion" ).accordion({
+            collapsible: true,
+            active: false,
+            heightStyle: "content"
+          });
+        </script>
+      </xsl:when>
+      <xsl:otherwise>
+        UNKNOWN
+      </xsl:otherwise>
+    </xsl:choose>
+  </body>
+</html>
 </xsl:template>
 
 </xsl:stylesheet>

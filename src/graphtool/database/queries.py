@@ -125,6 +125,7 @@ class SqlQuery( XmlConfig ):
       ctx = Context()
       vars['query'] = ctx
       query_error = None
+      results = []
       if agg == None or 'conn' in vars.keys():
         try:
           results = self.queries_obj.execute_sql( sql_string, sql_vars, **vars )

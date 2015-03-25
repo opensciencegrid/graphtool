@@ -1,6 +1,6 @@
 <graphtool-config>
 
-  <import file="$CONFIG_ROOT/connection.xml" />
+  <import module="example.config" data_file="connection.xml" />
 
   <import module="graphtool.database.query_handler">*</import>
   <import module="graphtool.database.queries">SqlQueries</import>

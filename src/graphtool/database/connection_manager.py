@@ -254,7 +254,7 @@ class OracleDatabase( DBConnection ):
 
 class MySqlDatabase( DBConnection ):
 
-  pool_size = 20
+  pool_size = 10
 
   def __init__( self, *args, **kw ):
     super( MySqlDatabase, self ).__init__( *args, **kw )

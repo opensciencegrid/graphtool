@@ -3,6 +3,8 @@
 <xsl:stylesheet version="1.0"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
+<xsl:include href="xml_results_templates/google_charts.xsl"/>
+	
 <xsl:output method="html"/>
 
 <xsl:template match="/">
@@ -28,11 +30,14 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <xsl:template name="query">
 
+      <xsl:param name="static_base_url" />
+      
       <xsl:call-template name="navtree">
           <xsl:with-param name="base_url" select="attr[@name='base_url']" />
       </xsl:call-template>
+      
       <xsl:choose>
-        <xsl:when test="graph">
+        <xsl:when test="graph and ( not(graph_kind) or graph_kind = 'matplotlib')">
           <xsl:if test="data/@coords">
             <xsl:variable name="pivot_name" select="data/@pivot" />
             <xsl:variable name="group_name" select="data/@group" />
@@ -83,6 +88,11 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
             <p> <img src="{url}"/> </p>
           </xsl:if> 
         </xsl:when>
+        <xsl:when test="graph and graph_kind and graph_kind = 'google_charts'">
+          <xsl:call-template name="google_chart">
+            <xsl:with-param name="static_base_url" select="$static_base_url" />
+          </xsl:call-template>
+        </xsl:when>
         <xsl:otherwise>
           <h1> <xsl:value-of select="title"/> </h1>
         </xsl:otherwise>
@@ -105,52 +115,8 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
           </xsl:for-each>
         </table>
         <input type="submit" value="Query again"/>
-        <script>
-          function setDateTimePicker(inp_id){
-            var inp_tag = $('#'+inp_id);
-            var prev_val = inp_tag.val();
-            inp_tag.datetimepicker({
-              format:'Y-m-d H:i:s',
-              mask:'9999-19-39 29:59:59'
-            });
-          }
-          function setSpanPicker(inp_id){
-            var inp_tag = $('#'+inp_id);
-            var autocomplete_vals = [
-                                      {
-                                        label:"3600 (1 Hour)",
-                                        value:3600
-                                      },
-                                      {
-                                        label:"86400 (1 Day)",
-                                        value:86400
-                                      },
-                                      {
-                                        label:"604800 (1 Week)",
-                                        value:604800
-                                      },
-                                      {
-                                        label:"2592000 (1 Month, 30 days)",
-                                        value:2592000
-                                      }
-                                     ];
-            inp_tag.autocomplete({
-              minLength: 0,
-              source: autocomplete_vals
-            });
-            inp_tag.focus(function(){
-                inp_tag.autocomplete( "search", "" );
-            });
-            inp_tag.click(function(){
-                inp_tag.autocomplete( "search", "" );
-            });
-            inp_tag.keyup(function(){
-                inp_tag.val(inp_tag.val().replace(/[^0-9]/g,''))
-            });
-          }
-          setDateTimePicker('starttime');
-          setDateTimePicker('endtime');
-          setSpanPicker('span');
+        <script type="text/javascript">
+          <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/custom/xml_results_query_filters.js</xsl:attribute>
         </script>
       </form>
 
@@ -206,7 +172,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
             <xsl:for-each select="columns/column">
               <th>
                 <xsl:value-of select="." />
-                <xsl:if test="string-length(@unit) > 0"> (<xsl:value-of select="@unit" />) </xsl:if>
+                <xsl:if test="string-length(@unit) &gt; 0"> (<xsl:value-of select="@unit" />) </xsl:if>
               </th>
             </xsl:for-each>
           </tr>
@@ -242,7 +208,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
                     </td>
                   </xsl:for-each>
                 </tr>
-	      </xsl:for-each>
+              </xsl:for-each>
             </xsl:for-each>
           </xsl:if>
           <xsl:if test="data/@kind='pivot'">
@@ -369,7 +335,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <script type="text/javascript">
       <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/jquery/jquery.datetimepicker.js</xsl:attribute>
     </script>
-    
+  
     <!-- Custom Javascript  -->
     <script type="text/javascript">
       function toggleBox( divId, state ) {
@@ -401,6 +367,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       <xsl:when test="query">
         <xsl:for-each select="query">
           <xsl:call-template name="query">
+            <xsl:with-param name="static_base_url" select="$static_base_url" />
           </xsl:call-template>
         </xsl:for-each>
       </xsl:when>

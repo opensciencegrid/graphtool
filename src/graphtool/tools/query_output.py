@@ -137,6 +137,18 @@ class XmlGenerator( QueryHandler ):
       gen.characters( graph_type )
       gen.endElement( 'graph' )
       gen.characters("\n\t\t")
+    graph_kind = metadata.get('graph_kind',False)
+    if graph_kind and len(graph_kind) > 0:
+      gen.startElement( 'graph_kind',{} )
+      gen.characters( graph_kind )
+      gen.endElement( 'graph_kind' )
+      gen.characters("\n\t\t")
+    js_data_transformation = metadata.get('js_data_transformation',False)
+    if js_data_transformation and len(js_data_transformation) > 0:
+      gen.startElement( 'js_data_transformation',{} )
+      gen.characters( js_data_transformation )
+      gen.endElement( 'js_data_transformation' )
+      gen.characters("\n\t\t")
     sql_string = str(metadata.get('sql',''))
     gen.startElement( 'sql',{} )
     gen.characters( sql_string )
@@ -145,36 +157,39 @@ class XmlGenerator( QueryHandler ):
     gen.characters("\n\t\t")
     self.write_sql_vars( results, metadata, gen )
     gen.characters("\n\t\t")
-    base_url = None
-    graphs = metadata.get('grapher',None)
-    if graphs and 'base_url' in graphs.metadata:
-        base_url = graphs.metadata['base_url']
-    else:
-      print "Base URL not specified!"
-      print metadata
-      if graphs:
-        print graphs.metadata
-      else:
-        print "Graphs not specified"
-      pass 
     my_base_url = self.metadata.get('base_url','')
     gen.startElement( 'attr',{'name':'base_url'} )
     gen.characters( my_base_url )
     gen.endElement( 'attr' )
     gen.characters('\n\t\t')
-    self.write_graph_url( results, metadata, gen, base_url=base_url )
-    gen.characters('\n\t\t')
+    self.write_graph_url( results, metadata, gen, graph_kind)
     return gen
 
-  def write_graph_url( self, results, metadata, gen, base_url=None ):
-    if base_url != None:
-      base = base_url + '/' + metadata.get('name','') + '?'
-      kw = metadata.get('given_kw',{})
-      for key, item in kw.items():
-        base += str(key) + '=' + str(item) + '&'
-      gen.startElement("url",{})
-      gen.characters( base )
-      gen.endElement("url")
+  def write_graph_url( self, results, metadata, gen, graph_kind):
+    if graph_kind == 'google_charts':
+      return
+    elif not graph_kind or graph_kind == 'matplotlib':
+      base_url = None
+      graphs = metadata.get('grapher',None)
+      if graphs and 'base_url' in graphs.metadata:
+          base_url = graphs.metadata['base_url']
+      else:
+        print "Base URL not specified!"
+        print metadata
+        if graphs:
+          print graphs.metadata
+        else:
+          print "Graphs not specified"
+        pass 
+      if base_url != None:
+        base = base_url + '/' + metadata.get('name','') + '?'
+        kw = metadata.get('given_kw',{})
+        for key, item in kw.items():
+          base += str(key) + '=' + str(item) + '&'
+        gen.startElement("url",{})
+        gen.characters( base )
+        gen.endElement("url")
+        gen.characters('\n\t\t')
 
   def write_sql_vars( self, data, metadata, gen ):
     sql_vars = metadata['sql_vars']

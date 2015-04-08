@@ -3,18 +3,18 @@
 //-------------------------------------------------------------------
 
 // data and google charts variables
-data                        = null;
-chart_properties            = null;
-data_gc                     = null;
-chart                       = null;
-min_dimensions_px           = 100;
-max_dimensions_px           = 3000;
+var data                        = null;
+var chart_properties            = null;
+var data_gc                     = null;
+var chart                       = null;
+var min_dimensions_px           = 100;
+var max_dimensions_px           = 3000;
 
 // ui-elements
-chart_div                   = $("#chart_div");
-chart_div_options           = $("#chart_div_options");
-chart_div_options_wrap      = $("#chart_div_options_wrap");
-chart_div_options_loaded    = false;
+var chart_div                   = $("#chart_div");
+var chart_div_options           = $("#chart_div_options");
+var chart_div_options_wrap      = $("#chart_div_options_wrap");
+var chart_div_options_loaded    = false;
 
 //-------------------------------------------------------------------
 // Common charts functions 

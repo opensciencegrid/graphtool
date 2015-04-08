@@ -13,7 +13,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <h1>"<xsl:value-of select="title"/>" loading . . .</h1>
   </div>
   <div id="chart_div_options_wrap" style="display: none;">
-    <h3>Chart Options:</h3>
+    <h3>Chart &amp; Export Options:</h3>
     <div id="chart_div_options_wrap_inner_panel">
       <div id="chart_div_options">
         <ul>

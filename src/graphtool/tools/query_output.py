@@ -143,11 +143,11 @@ class XmlGenerator( QueryHandler ):
       gen.characters( graph_kind )
       gen.endElement( 'graph_kind' )
       gen.characters("\n\t\t")
-    js_data_transformation = metadata.get('js_data_transformation',False)
-    if js_data_transformation and len(js_data_transformation) > 0:
-      gen.startElement( 'js_data_transformation',{} )
-      gen.characters( js_data_transformation )
-      gen.endElement( 'js_data_transformation' )
+    js_chart_setup = metadata.get('js_chart_setup',False)
+    if js_chart_setup and len(js_chart_setup) > 0:
+      gen.startElement( 'js_chart_setup',{} )
+      gen.characters( js_chart_setup )
+      gen.endElement( 'js_chart_setup' )
       gen.characters("\n\t\t")
     sql_string = str(metadata.get('sql',''))
     gen.startElement( 'sql',{} )

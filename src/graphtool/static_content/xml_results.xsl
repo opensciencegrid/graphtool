@@ -335,6 +335,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <script type="text/javascript">
       <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/jquery/jquery.datetimepicker.js</xsl:attribute>
     </script>
+    <script type="text/javascript">
+      <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/numeral/numeral.min.js</xsl:attribute>
+    </script>
   
     <!-- Custom Javascript  -->
     <script type="text/javascript">

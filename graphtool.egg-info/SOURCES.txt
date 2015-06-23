@@ -1,6 +1,5 @@
 MANIFEST.in
 README
-graphtool-0.6.6-py2.6.egg
 graphtool.spec
 setup.cfg
 setup.py

@@ -40,6 +40,34 @@
         inp_tag.val(inp_tag.val().replace(/[^0-9]/g,''))
     });
   }
+  function setOpportunisticFilterPicker(inp_id){
+    var inp_tag = $('#'+inp_id);
+    var autocomplete_vals = [
+                              {
+                                label:"Include All",
+                                value: 'BOTH'
+                              },
+                              {
+                                label:"Only Opportunistic",
+                                value:'OPPORTUNISTIC'
+                              },
+                              {
+                                label:"Only Owned",
+                                value:'OWNED'
+                              }
+                             ];
+    inp_tag.autocomplete({
+      minLength: 0,
+      source: autocomplete_vals
+    });
+    inp_tag.focus(function(){
+        inp_tag.autocomplete( "search", "" );
+    });
+    inp_tag.click(function(){
+        inp_tag.autocomplete( "search", "" );
+    });
+  }
   setDateTimePicker('starttime');
   setDateTimePicker('endtime');
   setSpanPicker('span');
+  setOpportunisticFilterPicker('opportunistic-filter');

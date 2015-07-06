@@ -133,7 +133,7 @@ def sql_vars_to_mysql_param_tuple (sql_string, sql_vars ):
   placement_dict = {}
   for var_name in sql_vars.keys():
     var_string = ':' + var_name
-    reg_obj = re.compile(var_string+r"[\s()!=&|]")
+    reg_obj = re.compile(re.escape(var_string)+r"[\s()!=&|,]")
     placement = reg_obj.search(my_sql_statement)
     if placement is None:
       placement = -1

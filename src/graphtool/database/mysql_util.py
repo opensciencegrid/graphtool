@@ -121,24 +121,34 @@ def reduce_regexp_usage(query,variables):
         in_clause = in_clause[:len(in_clause)-1]+")"
         query = re.sub(re.escape(" regexp :-"+str(index)+"-"), in_clause, query)
   query = reverse_rename_params(query, variables.keys())
+  log.debug("Reduce regexp query: %s"%query)
   return query
 
 """
   Transforms the SQL-metadata vars to msyql_param_tuple
 """
 def sql_vars_to_mysql_param_tuple (sql_string, sql_vars ):
-  my_sql_statement = reduce_regexp_usage(str(sql_string), sql_vars)
+  my_sql_statement = sql_string
   sql_vars = dict( sql_vars )
   placement_dict = {}
   for var_name in sql_vars.keys():
     var_string = ':' + var_name
-    placement = my_sql_statement.find( var_string )
+    reg_obj = re.compile(re.escape(var_string)+r"[\s()!=&|,]")
+    placement = reg_obj.search(my_sql_statement)
+    if placement is None:
+      placement = -1
+    else:
+      placement = placement.start()
     var_string_len = len(var_string)
     while placement >= 0:
       placement_dict[placement] = var_name
       spaceadd = " "*(var_string_len-2)
       my_sql_statement = my_sql_statement[:placement] + '%s'+spaceadd + my_sql_statement[placement+var_string_len:]
-      placement = my_sql_statement.find( var_string )
+      placement = reg_obj.search(my_sql_statement)
+      if placement is None:
+        placement = -1
+      else:
+        placement = placement.start()
   places = placement_dict.keys(); places.sort()
   my_sql_param_tuple = ()
   for place in places:

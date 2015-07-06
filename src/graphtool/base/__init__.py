@@ -10,6 +10,9 @@ try:
 except:
     pass
 
+def get_qh_globals():
+    return globals()
+
 class GraphToolInfo(object):
 
   commands = {}

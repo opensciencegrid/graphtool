@@ -197,8 +197,30 @@ class DatabaseInfoV2( XmlConfig ):
     self.conn_manager = classes[ conn_man_name ]
 
   def execute_sql( self, sql_string, sql_var, conn=None, **kw ):
-
+    # get the connection by name
     conn = self.conn_manager.get_connection( conn )
+    # Mysql reduce regexp call for mysql
+    import mysql_util
+    import connection_manager
+    if isinstance(conn, connection_manager.MySqlDatabase):
+        sql_string = mysql_util.reduce_regexp_usage(str(sql_string), sql_var)
+    # Dynamic SQL modifier function call
+    sql_dynamic_modif_func_mod_name = None
+    if kw.has_key('sql_dynamic_modif_func_mod_name'):
+      sql_dynamic_modif_func_mod_name = kw['sql_dynamic_modif_func_mod_name']
+      exec_string = 'import %s'%sql_dynamic_modif_func_mod_name
+      exec exec_string
+    sql_dynamic_modif_func = None
+    if kw.has_key('sql_dynamic_modif_func'):
+      mod_func = None
+      sql_dynamic_modif_func = kw['sql_dynamic_modif_func']
+      exec_string = "mod_func = "
+      if sql_dynamic_modif_func_mod_name is not None:
+        exec_string += sql_dynamic_modif_func_mod_name+"."
+      exec_string += "%s"%sql_dynamic_modif_func
+      exec exec_string
+      sql_string = mod_func(sql_string,conn,**kw)
+    # Executer the SQL call
     try:
       results = conn.execute_statement( sql_string, sql_var )
     except NoConnectionWithDBException, e:

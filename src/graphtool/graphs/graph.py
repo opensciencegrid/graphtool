@@ -216,6 +216,13 @@ class Grapher( Cache, QueryHandler ):
         return graph_results
 
     def do_graph( self, obj, metadata, is_query=False, **kw ):
+        matplot_graph = True
+        if 'graph_kind' in metadata:
+            graph_kind = metadata['graph_kind']
+            graph_kind = graph_kind.strip()
+            matplot_graph = graph_kind == 'matplotlib'
+        if not matplot_graph:
+            return None
         timer = -time.time()
         if is_query: query = obj
         else: query = metadata['query']

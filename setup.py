@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/graphtool-0.6.6-py2.6.egg')
+#sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/graphtool-0.6.6-py2.6.egg')
 
 try:
     import ez_setup
@@ -13,7 +13,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'graphtool',
-    version = '0.6.6',
+    version = '0.7.0',
     description = 'CMS Common Graphing Package',
     author = 'Brian Bockelman',
     author_email = "bbockelm@cse.unl.edu",

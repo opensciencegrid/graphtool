@@ -530,4 +530,11 @@ def complex_pivot_parser( sql_results, pivots="0", results="1", pivot_transform=
     metadata['kind'] = 'complex-pivot'
 
     return filtered_results, metadata
+  
+"""
+  Transformations for javascript plotting libraries
+"""
+import json
 
+def json_pivot_arr(*pivot, **kw):
+  return json.dumps(pivot,separators=(',',':'))

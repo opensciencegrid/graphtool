@@ -108,10 +108,12 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
             </tr>
           </thead>
           <xsl:for-each select="sqlvars/var">
-            <tr>
-              <td> <xsl:value-of select="@name" /> </td>
-              <td> <input type="text" id="{@name}" name="{@name}" value="{.}" /> </td>
-            </tr>
+            <xsl:if test="@name!='sql_dynamic_modif_func_mod_name' and @name!='sql_dynamic_modif_func'">
+              <tr>
+                <td> <xsl:value-of select="@name" /> </td>
+                <td> <input type="text" id="{@name}" name="{@name}" value="{.}" /> </td>
+              </tr>
+            </xsl:if>
           </xsl:for-each>
         </table>
         <input type="submit" value="Query again"/>

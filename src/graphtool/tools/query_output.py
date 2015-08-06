@@ -167,7 +167,15 @@ class XmlGenerator( QueryHandler ):
 
   def write_graph_url( self, results, metadata, gen, graph_kind):
     if graph_kind == 'google_charts':
-      return
+      base_url = self.metadata.get('base_url','')
+      base = base_url + '/' + metadata.get('name','') + '?'
+      kw = metadata.get('given_kw',{})
+      for key, item in kw.items():
+        base += str(key) + '=' + str(item) + '&'
+      gen.startElement("url",{})
+      gen.characters( base )
+      gen.endElement("url")
+      gen.characters('\n\t\t')
     elif not graph_kind or graph_kind == 'matplotlib':
       base_url = None
       graphs = metadata.get('grapher',None)

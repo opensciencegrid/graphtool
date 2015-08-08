@@ -69,6 +69,29 @@ graphtool.GC_COMMON.prototype.drawChart = function(ops) {
 } 
 
 //-------------------------------------------------------------------
+// Common Data Transform Functions
+//-------------------------------------------------------------------
+
+graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(){
+  this.gc_init_table = new google.visualization.DataTable();
+  var i,j;
+  for(var i = 0 ; i < this.data.length ; i++){
+    var pivot_n_results = this.data[i][0].concat(this.data[i][1]);
+    if(i == 0){
+      for(j=0;j<pivot_n_results.length;j++){
+        if(j==0)
+          this.gc_init_table.addColumn('string',pivot_n_results[j]);
+        else
+          this.gc_init_table.addColumn('number',pivot_n_results[j]);
+      }
+    }
+    else{
+      this.gc_init_table.addRow(pivot_n_results);
+    }
+  }
+}
+
+//-------------------------------------------------------------------
 // Common UI functions 
 //-------------------------------------------------------------------
   

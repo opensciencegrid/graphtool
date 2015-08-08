@@ -1,6 +1,6 @@
 
 
-graphtool.GC_TREE = function(){
+graphtool.GC_TREE_MAP = function(){
   graphtool.GC_COMMON.call(this)
   
   //-------------------------------------------------------------------
@@ -15,14 +15,14 @@ graphtool.GC_TREE = function(){
   google.load("visualization", "1", {packages:["treemap"], callback: this.load_google_callback.bind(this)});
 };
 
-graphtool.GC_TREE.prototype = graphtool.GC_COMMON.prototype
-graphtool.GC_TREE.prototype.constructor = graphtool.GC_TREE
+graphtool.GC_TREE_MAP.prototype = graphtool.GC_COMMON.prototype
+graphtool.GC_TREE_MAP.prototype.constructor = graphtool.GC_TREE_MAP
 
 //-------------------------------------------------------------------
 // Data Transformation functions 
 //-------------------------------------------------------------------
 
-graphtool.GC_TREE.prototype.load_formatters_json = function(){
+graphtool.GC_TREE_MAP.prototype.load_formatters_json = function(){
   if(typeof this.chart_formatters == "undefined"){
     var level_formatters = [];
     for(i = 0 ; i < this.num_levels ; i++)
@@ -62,7 +62,7 @@ graphtool.GC_TREE.prototype.load_formatters_json = function(){
     this.formatters.value_formatter = graphtool.GC_COMMON.echo_func;
 }
 
-graphtool.GC_TREE.prototype.get_levels_formatters = function(levels_order){
+graphtool.GC_TREE_MAP.prototype.get_levels_formatters = function(levels_order){
   if(levels_order){
     var tmp_formatters = [];
     for(var k = 0 ; k < levels_order.length ; k++)
@@ -75,7 +75,7 @@ graphtool.GC_TREE.prototype.get_levels_formatters = function(levels_order){
   return this.formatters.level_formatters;
 }
 
-graphtool.GC_TREE.prototype.sum_and_avg = function(results_1,results_2,weighted_avg){
+graphtool.GC_TREE_MAP.prototype.sum_and_avg = function(results_1,results_2,weighted_avg){
   if(results_1.length >= 2 && results_2.length >= 2){
     var new_results = [(results_1[0]+results_2[0]),0];
     if(weighted_avg)
@@ -90,7 +90,7 @@ graphtool.GC_TREE.prototype.sum_and_avg = function(results_1,results_2,weighted_
     return [1,1]
 }
 
-graphtool.GC_TREE.prototype.table_group_to_json_tree = function(data_var,levels_order){
+graphtool.GC_TREE_MAP.prototype.table_group_to_json_tree = function(data_var,levels_order){
   var data_tree = {}
   var level_formatter_funcs = this.get_levels_formatters(levels_order);
   var weighted_avg = (typeof this.chart_properties.useWeightedAverageForAggregation == "undefined")? false:this.chart_properties.useWeightedAverageForAggregation;
@@ -137,7 +137,7 @@ graphtool.GC_TREE.prototype.table_group_to_json_tree = function(data_var,levels_
   return data_tree;
 }
 
-graphtool.GC_TREE.prototype.get_levels_and_results_names = function(data_var){
+graphtool.GC_TREE_MAP.prototype.get_levels_and_results_names = function(data_var){
   var i = null;// single declaration for i index auxiliary variable
   for(i = 1 ; i < data_var.length ; i++)
     if(data_var[i][0].length > this.num_levels)
@@ -159,7 +159,7 @@ graphtool.GC_TREE.prototype.get_levels_and_results_names = function(data_var){
   }
 }
 
-graphtool.GC_TREE.prototype.json_tree_to_table = function(tree,parent,table,pivot_titles,level){
+graphtool.GC_TREE_MAP.prototype.json_tree_to_table = function(tree,parent,table,pivot_titles,level){
   for(var key in tree){
     var childs = tree[key]
     var var_title = (pivot_titles.length > level) ? "<b>"+pivot_titles[level]+":</b>":"";
@@ -180,7 +180,7 @@ graphtool.GC_TREE.prototype.json_tree_to_table = function(tree,parent,table,pivo
   }
 }
 
-graphtool.GC_TREE.prototype.table_group_to_table_tree = function (data_var,levels_order){
+graphtool.GC_TREE_MAP.prototype.table_group_to_table_tree = function (data_var,levels_order){
   var data_tree = this.table_group_to_json_tree(data_var,levels_order);
   
   var root;
@@ -214,7 +214,7 @@ graphtool.GC_TREE.prototype.table_group_to_table_tree = function (data_var,level
 // UI functions 
 //-------------------------------------------------------------------
 
-graphtool.GC_TREE.prototype.include_level_order_options = function(){
+graphtool.GC_TREE_MAP.prototype.include_level_order_options = function(){
   var html_code = 
     '<style>'+
     '  .active-inactive-connected-sortable {'+
@@ -272,7 +272,7 @@ graphtool.GC_TREE.prototype.include_level_order_options = function(){
     }.bind(this));
 }
 
-graphtool.GC_TREE.prototype.load_tree_options = function(){
+graphtool.GC_TREE_MAP.prototype.load_tree_options = function(){
   this.load_default_options_tabs();
   this.include_level_order_options();
 }
@@ -281,7 +281,7 @@ graphtool.GC_TREE.prototype.load_tree_options = function(){
 // Charts functions 
 //-------------------------------------------------------------------
 
-graphtool.GC_TREE.prototype.defaultToolTip = function(row, size, value) {
+graphtool.GC_TREE_MAP.prototype.defaultToolTip = function(row, size, value) {
   return '<div style="background:#fff; padding:5px; border-style:solid">' +
          '  '+this.data_gc.getValue(row, 0)+'<br/>'+
          '  <b>'+this.data_gc.getColumnLabel(2)+':</b> '+this.formatters.size_formatter(size)+'<br/>'+
@@ -289,13 +289,13 @@ graphtool.GC_TREE.prototype.defaultToolTip = function(row, size, value) {
          '</div>';
 }
 
-graphtool.GC_TREE.prototype.drawChart = function() {
+graphtool.GC_TREE_MAP.prototype.drawChart = function() {
   this.data_in_gc_format = this.table_group_to_table_tree(this.data);
   this.data_gc = google.visualization.arrayToDataTable(this.data_in_gc_format);
   this.chart.draw(this.data_gc, this.chart_properties);
 }
 
-graphtool.GC_TREE.prototype.load_google_callback = function() {
+graphtool.GC_TREE_MAP.prototype.load_google_callback = function() {
   // first get number of levels and then load the json formatters description
   this.get_levels_and_results_names(this.data);
   this.load_formatters_json();
@@ -321,4 +321,4 @@ graphtool.GC_TREE.prototype.load_google_callback = function() {
 // Draw on load
 //-------------------------------------------------------------------
 
-tree = new graphtool.GC_TREE();
+tree = new graphtool.GC_TREE_MAP();

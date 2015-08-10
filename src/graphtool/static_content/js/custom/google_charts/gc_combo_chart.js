@@ -9,6 +9,7 @@ graphtool.GC_COMBO_CHART = function(){
   this.groups             = null;
   this.groups_views       = null;
   this.data_gc            = null;
+  this.selected_groups    = [];
   google.load("visualization", "1", {packages:["corechart"], callback: this.load_google_callback.bind(this)});
 };
 
@@ -52,12 +53,47 @@ graphtool.GC_COMBO_CHART.prototype.to_gc_table_format = function(){
   console.log(csv);
 }
 
+
 //-------------------------------------------------------------------
 // UI functions 
 //-------------------------------------------------------------------
 
+graphtool.GC_COMBO_CHART.prototype.include_groups_order_options = function(){
+  
+}
+
+graphtool.GC_COMBO_CHART.prototype.change_stack_property = function(){
+  this.chart_properties.isStacked = !this.chart_properties.isStacked;
+  this.drawChart();
+  if(this.chart_properties.isStacked){
+    $(".gc_stack_on").hide()
+    $(".gc_stack_off").show()
+  }
+  else{
+    $(".gc_stack_on").show()
+    $(".gc_stack_off").hide()
+  }
+}
+
+graphtool.GC_COMBO_CHART.prototype.include_stack_options = function(){
+  var html_code = "<button class='gc_stack_off'>Unstack</button><button class='gc_stack_on'>Stack</button>"
+  this.include_options_tab("tree_level_order","Stack",html_code);
+  $(".gc_stack_on, .gc_stack_off").click()
+      .button()
+      .click(this.change_stack_property.bind(this));
+  if(this.chart_properties.isStacked){
+    $(".gc_stack_on").hide()
+    $(".gc_stack_off").show()
+  }
+  else{
+    $(".gc_stack_on").show()
+    $(".gc_stack_off").hide()
+  }  
+}
+
 graphtool.GC_COMBO_CHART.prototype.load_combo_options = function(){
   this.load_default_options_tabs();
+  this.include_stack_options();
 }
 
 //-------------------------------------------------------------------
@@ -74,8 +110,7 @@ graphtool.GC_COMBO_CHART.prototype.defaultToolTip = function(row, size, value) {
 
 graphtool.GC_COMBO_CHART.prototype.drawChart = function() {
   this.to_gc_table_format();
-  this.chart.draw(this.data_gc, {seriesType: 'bars',
-      isStacked: true    });
+  this.chart.draw(this.data_gc, this.chart_properties);
 }
 
 graphtool.GC_COMBO_CHART.prototype.load_google_callback = function() {

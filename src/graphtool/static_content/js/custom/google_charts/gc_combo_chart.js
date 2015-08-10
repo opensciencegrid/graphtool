@@ -9,7 +9,7 @@ graphtool.GC_COMBO_CHART = function(){
   this.groups             = null;
   this.groups_views       = null;
   this.data_gc            = null;
-  this.selected_groups    = [];
+  this.selected_groups    = new Set();
   google.load("visualization", "1", {packages:["corechart"], callback: this.load_google_callback.bind(this)});
 };
 
@@ -27,30 +27,33 @@ graphtool.GC_COMBO_CHART.prototype.to_gc_table_format = function(){
     [{'column': 2, 'aggregation': google.visualization.data.sum, 'type': 'number'}]);
   this.groups.sort([{column: 1}])
   this.groups_views = []
-  var i,j;
+  var i,j,added = 0;
+  var cols = [];
   for(i=0;i<this.groups.getNumberOfRows();i++){
-    var view_i = new google.visualization.DataView(this.gc_init_table);
-    view_i.setRows(view_i.getFilteredRows([{column: 0, value: this.groups.getValue(i, 0)},{column: 1},{column: 2}]));
-    this.groups_views.push(view_i)
-    if(i==0)
-      this.data_gc = view_i
-    else if(i==1){
-      this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[1,1]],[2],[2])
-    }
-    else{
-      var cols = []
-      for(j=0;j<i;j++)
-        cols.push((j+1))
-      this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[0,1]],cols,[2])
+    if(this.selected_groups.size == 0 || this.selected_groups.has(i)){
+      var view_i = new google.visualization.DataView(this.gc_init_table);
+      view_i.setRows(view_i.getFilteredRows([{column: 0, value: this.groups.getValue(i, 0)},{column: 1},{column: 2}]));
+      this.groups_views.push(view_i)
+      if(added==0){
+        this.data_gc = view_i;
+      }
+      else if(added==1){
+        this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[1,1]],[2],[2])
+      }
+      else{
+        this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[0,1]],cols,[2])
+      }
+      added++;
+      cols.push(added)
     }
   }
   this.data_gc.setColumnLabel(0, "time")
+  current=1
   for(i=0;i<this.groups.getNumberOfRows();i++){
-    this.data_gc.setColumnLabel(i+1, this.groups.getValue(i, 0))
+    if(this.selected_groups.size == 0 || this.selected_groups.has(i))
+      this.data_gc.setColumnLabel(current++, this.groups.getValue(i, 0))
   }
   this.data_gc.sort([{column: 0}])
-  var csv = google.visualization.dataTableToCsv(this.data_gc);
-  console.log(csv);
 }
 
 
@@ -58,8 +61,61 @@ graphtool.GC_COMBO_CHART.prototype.to_gc_table_format = function(){
 // UI functions 
 //-------------------------------------------------------------------
 
-graphtool.GC_COMBO_CHART.prototype.include_groups_order_options = function(){
+graphtool.GC_COMBO_CHART.prototype.include_groups_selection_options = function(){
+  var html_code = 
+  '<style>'+
+  '  .active-inactive-connected-sortable {'+
+  '    width:    300px;'+      
+  '    border: 1px dashed #000;'+
+  '    padding: 5px;'+
+  '  }'+
+  '  .active-inactive-connected-sortable div {'+
+  '    margin: 0 3px 3px 3px;'+
+  '    padding: 0.4em;'+
+  '    padding-left: 1.5em;'+
+  '    font-size: 1.4em;'+
+  '    height: 18px; }'+
+  '  .active-inactive-connected-sortable div span { position: absolute; margin-left: -1.3em; }'+
+  '</style>'+
+  '<table><tr>'+
+  '<td style="vertical-align: top;"><div>'+
+  '  <b>Show</b>'+
+  '  <div id="sortable_active" class="active-inactive-connected-sortable">'+
+  '  </div>'+
+  '</div></td>'+
+  '<td><span class="ui-icon ui-icon-arrowthick-2-e-w"></td>'+
+  '<td style="vertical-align: top;"><div>'+
+  '  <b>Hide</b>'+
+  '  <div id="sortable_inactive" class="active-inactive-connected-sortable">';
+  for(var i = 0 ; i < this.groups.getNumberOfRows(); i++)
+    html_code += '<div id="'+i+'-order" class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>'+this.groups.getValue(i,0)+'</div>';
+  html_code +='</div>'+
+    '</div></td>'+
+    '</tr></table>'+      
+    '<button id="rerender-by-order">Draw Plot</button>';
+  this.include_options_tab("groups_selection","Selection",html_code);
   
+  $( "#sortable_active, #sortable_inactive" ).sortable({
+    connectWith: ".active-inactive-connected-sortable"
+  }).disableSelection();
+  // fix the max height as the height of the active levels
+  var max_h = $("#sortable_inactive").height();
+  $("#sortable_active").height(max_h);
+  $("#sortable_inactive").height(max_h);
+  $("#rerender-by-order")
+    .button()
+    .click(function( event ) {
+      var order_str = $("#sortable_active").sortable("toArray");
+      if(order_str.length <= 0){
+        alert("No levels selected!")
+        return;
+      }
+      console.log(order_str)
+      this.selected_groups.clear();
+      for(var i = 0 ; i < order_str.length ; i++)
+        this.selected_groups.add(parseInt(order_str[i].split('-')[0])-1);
+      this.drawChart();
+    }.bind(this));
 }
 
 graphtool.GC_COMBO_CHART.prototype.change_stack_property = function(){
@@ -93,6 +149,7 @@ graphtool.GC_COMBO_CHART.prototype.include_stack_options = function(){
 
 graphtool.GC_COMBO_CHART.prototype.load_combo_options = function(){
   this.load_default_options_tabs();
+  this.include_groups_selection_options()
   this.include_stack_options();
 }
 

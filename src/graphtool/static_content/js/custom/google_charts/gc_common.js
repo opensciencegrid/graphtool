@@ -10,7 +10,6 @@ graphtool.GC_COMMON = function(){
   this.data                        = {};
   this.chart_properties            = {};
   
-  
   this.chart_formatters            = {};
   this.data_gc                     = null;
   this.chart                       = null;
@@ -66,7 +65,7 @@ graphtool.GC_COMMON.prototype.open_image_as_png = function(){
 
 graphtool.GC_COMMON.prototype.drawChart = function(ops) {
   alert("Not implemented yet!")
-} 
+}
 
 //-------------------------------------------------------------------
 // Common Data Transform Functions
@@ -74,20 +73,47 @@ graphtool.GC_COMMON.prototype.drawChart = function(ops) {
 
 graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(){
   this.gc_init_table = new google.visualization.DataTable();
+  var date_columns = []
+  var num_columns  = []
   var i,j;
+  var temp_date;
   for(var i = 0 ; i < this.data.length ; i++){
     var pivot_n_results = this.data[i][0].concat(this.data[i][1]);
     if(i == 0){
       for(j=0;j<pivot_n_results.length;j++){
-        if(j==0)
-          this.gc_init_table.addColumn('string',pivot_n_results[j]);
-        else
-          this.gc_init_table.addColumn('number',pivot_n_results[j]);
+        var type = 'number'
+        var name = 'column-'+j
+        if(pivot_n_results[j] !== null && typeof pivot_n_results[j] === 'object')
+        {
+          if('type' in pivot_n_results[j])
+            type = pivot_n_results[j].type;
+          if('name' in pivot_n_results[j])
+            name = pivot_n_results[j].name;
+        }
+        else if(pivot_n_results[j] !== null){
+          name = String(pivot_n_results[j].name);
+        }
+        if(type == 'datetime'){
+          date_columns.push(j)
+        }
+        else if(type == 'number'){
+          num_columns.push(j)
+        }
+        this.gc_init_table.addColumn(type,name);
       }
     }
     else{
+      for(j in date_columns){
+        temp_date = new Date();
+        temp_date.setTime(pivot_n_results[date_columns[j]]*1000);
+        pivot_n_results[date_columns[j]] = temp_date;
+      }
       this.gc_init_table.addRow(pivot_n_results);
     }
+  }
+  this.no_decimal_formatter        = new google.visualization.NumberFormat({ fractionDigits: 0 });
+  for(j in num_columns){  
+    this.no_decimal_formatter.format(this.gc_init_table,num_columns[j])
   }
 }
 
@@ -115,7 +141,7 @@ graphtool.GC_COMMON.prototype.setup_options_menu = function(load_tabs_func){
 }
 
 graphtool.GC_COMMON.prototype.include_options_tab = function(id,title,html_code){
-  this.chart_div_options.find("ul").append('<li><a href="#'+id+'">'+title+'</a></li>')
+  this.chart_div_options.find("ul").first().append('<li><a href="#'+id+'">'+title+'</a></li>')
   this.chart_div_options.append('<div id="'+id+'">'+html_code+'</div>')
 }
 
@@ -144,7 +170,7 @@ graphtool.GC_COMMON.prototype.include_size_options = function(){
 
 graphtool.GC_COMMON.prototype.include_export_options = function (){
   var html_code = 
-    '<button id="export_as_png_button">Export as PNG</button>';
+    '<div><button id="export_as_png_button">Export as PNG</button></div>';
   this.include_options_tab("chart_export","Export",html_code);
   $("#export_as_png_button")
       .button()

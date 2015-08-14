@@ -18,7 +18,7 @@ graphtool.GC_PIE_CHART.prototype.constructor = graphtool.GC_PIE_CHART
 
 graphtool.GC_PIE_CHART.prototype.to_gc_table_format = function(){
   this.pivot_results_to_gc_table();
-  this.gc_init_table.sort({column:1})
+  this.gc_init_table.sort({column:1,desc: true})
   this.data_gc = this.gc_init_table;
 }
 

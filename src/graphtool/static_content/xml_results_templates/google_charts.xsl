@@ -16,7 +16,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   </div>
   <div id="chart_div_options_wrap" style="display: none;">
     <h3>Chart &amp; Export Options:</h3>
-    <div id="chart_div_options_wrap_inner_panel">
+    <div id="chart_div_options_wrap_inner_panel" style="overflow:visible">
       <div id="chart_div_options">
         <ul>
         </ul>

@@ -49,7 +49,7 @@ class CsvGenerator(QueryHandler):
 
     def addResults_p( self, data, metadata, gen, **kw ):
         gen.write(metadata.get('pivot_name', 'Unknown Pivot') + ',')
-        gen.write(metadata.get('column_names') + '\n')
+        gen.write(metadata.get('column_names', 'Unknown Column') + '\n')
 
         keys = data.keys()
         keys.sort()

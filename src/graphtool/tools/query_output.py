@@ -3,6 +3,9 @@ from graphtool.database.query_handler import QueryHandler
 from graphtool.tools.common import expand_string, to_timestamp
 from xml.sax.saxutils import XMLGenerator
 import types, cStringIO, datetime, traceback, sys
+from matplotlib_2_google_charts import mpl_2_gc
+import json
+from graphtool.database.query_handler import DecimalEncoder
 
 # See if we can use the multiprocessing module in order to offload the CPU
 # heavy graph generations to another process.
@@ -132,18 +135,28 @@ class XmlGenerator( QueryHandler ):
       gen.endElement( 'title' )
       gen.characters("\n\t\t")
     graph_type = metadata.get('graph_type',False)
+    graph_kind = metadata.get('graph_kind',False)
+    js_chart_setup = metadata.get('js_chart_setup',False)
+    
+    if not graph_kind and mpl_2_gc.has_key(graph_type):
+      maped_gc = mpl_2_gc[graph_type]
+      graph_type = maped_gc['gc_type']
+      js_chart_setup = maped_gc['gc_js_setup']
+      graph_kind = 'google_charts'
+      metadata['translate_mp_2_gc'] = True
+    
     if graph_type and len(graph_type) > 0:
       gen.startElement( 'graph',{} )
       gen.characters( graph_type )
       gen.endElement( 'graph' )
       gen.characters("\n\t\t")
-    graph_kind = metadata.get('graph_kind',False)
+    
     if graph_kind and len(graph_kind) > 0:
       gen.startElement( 'graph_kind',{} )
       gen.characters( graph_kind )
       gen.endElement( 'graph_kind' )
       gen.characters("\n\t\t")
-    js_chart_setup = metadata.get('js_chart_setup',False)
+      
     if js_chart_setup and len(js_chart_setup) > 0:
       gen.startElement( 'js_chart_setup',{} )
       gen.characters( js_chart_setup )
@@ -272,12 +285,12 @@ class XmlGenerator( QueryHandler ):
 
     for pivot in data.keys():
       gen.characters("\n\t\t\t")
-      gen.startElement( *self.pivotName( pivot, attrs ) )
+      gen.startElement( *self.pivotName( pivot, attrs, metadata ) )
       my_groups = data[pivot].keys(); my_groups.sort(); my_groups.reverse()
       for grouping in my_groups:
         gen.characters("\n\t\t\t\t")
         grouping_attrs = {}
-        gen.startElement('group', self.groupingAttrs( grouping_name, grouping ) )
+        gen.startElement('group', self.groupingAttrs( grouping_name, grouping, metadata ) )
         if coords:
           try:
             groups = coords[pivot]
@@ -288,9 +301,9 @@ class XmlGenerator( QueryHandler ):
             #print "Missing coords", pivot, grouping
             #print e
             pass
-        self.addData( data[pivot][grouping], gen, **kw )
+        self.addData( data[pivot][grouping], gen, metadata, **kw )
         gen.endElement('group')
-      gen.endElement( self.pivotName( pivot, attrs )[0] )
+      gen.endElement( self.pivotName( pivot, attrs, metadata )[0] )
     gen.characters("\n\t\t")
     gen.endElement('data')
     gen.characters("\n\t")
@@ -316,12 +329,12 @@ class XmlGenerator( QueryHandler ):
     gen.startElement('data',attrs)
     for pivot in data.keys():
       gen.characters("\n\t\t\t")
-      gen.startElement( *self.pivotName(pivot, attrs) )
+      gen.startElement( *self.pivotName(pivot, attrs, metadata) )
       if coords and (pivot in coords.keys()):
         kw['coords'] = coords[pivot]
-      self.addData( data[pivot], gen, **kw )
+      self.addData( data[pivot], gen, metadata, **kw )
       gen.characters("\n\t\t\t")
-      gen.endElement( self.pivotName( pivot, attrs)[0] )
+      gen.endElement( self.pivotName( pivot, attrs, metadata)[0] )
     gen.characters("\n\t\t")
     gen.endElement('data')
     gen.characters("\n\t")
@@ -335,35 +348,40 @@ class XmlGenerator( QueryHandler ):
     gen.startElement('data',attrs)
     for pivot, info in data:
       gen.characters("\n\t\t\t")
-      gen.startElement( *self.pivotName(pivot, attrs) )
-      self.addData( info, gen, **kw )
+      gen.startElement( *self.pivotName(pivot, attrs, metadata) )
+      self.addData( info, gen, metadata, **kw )
       gen.characters("\n\t\t\t")
-      gen.endElement( self.pivotName( pivot, attrs)[0] )
+      gen.endElement( self.pivotName( pivot, attrs, metadata)[0] )
     gen.characters("\n\t\t")
     gen.endElement('data')
     gen.characters("\n\t")    
 
-  def groupingAttrs( self, grouping_name, grouping ):
+  def groupingAttrs( self, grouping_name, grouping, metadata):
     grouping_attrs = {}
-    if grouping_name and str(grouping_name).lower()=='time':
+    if metadata.get('translate_mp_2_gc',False):
+      grouping_attrs['value'] = json.dumps(grouping,separators=(',',':'), cls=DecimalEncoder)
+    elif grouping_name and str(grouping_name).lower()=='time':
       grouping_attrs['value'] = str(datetime.datetime.utcfromtimestamp(to_timestamp(grouping)))
     else:
       grouping_attrs['value'] = str(grouping)
     return grouping_attrs
 
   #TODO: make this more generic!  Built in change for Phedex link.
-  def pivotName( self, pivot, attrs ):
+  def pivotName( self, pivot, attrs, metadata ):
     #if attrs['pivot'] == 'Link':
     #  return 'link', {'from':pivot[0],'to':pivot[1]}
     #else:
+      if metadata.get('translate_mp_2_gc',False):
+        return 'pivot',{'name':json.dumps(pivot,separators=(',',':'), cls=DecimalEncoder)}
       return 'pivot',{'name':str(pivot)}
 
-  def addData( self, data, gen, coords=None, **kw ):
+  def addData( self, data, gen, metadata, coords=None, **kw ):
         if type(data) != types.TupleType:
           my_data = [  data ]
         else:
           my_data = data
-        if coords:
+          
+        if coords and not(metadata.get('translate_mp_2_gc',False)):
           gen.characters("\n\t\t\t\t\t")
           coords = str( coords ).replace('(','').replace(')','')
           gen.startElement( 'coords', {} )
@@ -372,7 +390,10 @@ class XmlGenerator( QueryHandler ):
         for datum in my_data:
           gen.characters("\n\t\t\t\t\t")
           gen.startElement('d',{})
-          gen.characters( str(datum) )
+          if metadata.get('translate_mp_2_gc',False):
+            gen.characters( json.dumps(datum,separators=(',',':'), cls=DecimalEncoder) )
+          else:
+            gen.characters( str(datum) )
           gen.endElement( 'd' )
         gen.characters("\n\t\t\t\t")
 

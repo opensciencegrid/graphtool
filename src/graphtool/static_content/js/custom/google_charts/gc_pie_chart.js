@@ -17,7 +17,6 @@ graphtool.GC_PIE_CHART.prototype.constructor = graphtool.GC_PIE_CHART
 //-------------------------------------------------------------------
 
 graphtool.GC_PIE_CHART.prototype.to_gc_table_format = function(){
-  this.pivot_results_to_gc_table();
   this.gc_init_table.sort({column:1,desc: true})
   this.data_gc = this.gc_init_table;
 }
@@ -41,6 +40,7 @@ graphtool.GC_PIE_CHART.prototype.drawChart = function() {
 }
 
 graphtool.GC_PIE_CHART.prototype.load_google_callback = function() {
+  this.pivot_results_to_gc_table(['string','number']);
   // create plot afterwards
   this.chart = new google.visualization.PieChart(this.chart_div.get(0));
   if(typeof this.chart_properties == "undefined"){

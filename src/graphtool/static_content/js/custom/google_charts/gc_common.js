@@ -71,7 +71,7 @@ graphtool.GC_COMMON.prototype.drawChart = function(ops) {
 // Common Data Transform Functions
 //-------------------------------------------------------------------
 
-graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(){
+graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(column_types){
   this.gc_init_table = new google.visualization.DataTable();
   var date_columns = []
   var num_columns  = []
@@ -83,16 +83,11 @@ graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(){
       for(j=0;j<pivot_n_results.length;j++){
         var type = 'number'
         var name = 'column-'+j
-        if(pivot_n_results[j] !== null && typeof pivot_n_results[j] === 'object')
-        {
-          if('type' in pivot_n_results[j])
-            type = pivot_n_results[j].type;
-          if('name' in pivot_n_results[j])
-            name = pivot_n_results[j].name;
-        }
-        else if(pivot_n_results[j] !== null){
-          name = String(pivot_n_results[j].name);
-        }
+        if(column_types.length > j)
+          type = column_types[j]
+        if(pivot_n_results.length > j)
+          name = String(pivot_n_results[j])
+        
         if(type == 'datetime'){
           date_columns.push(j)
         }

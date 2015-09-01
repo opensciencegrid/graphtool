@@ -122,7 +122,10 @@ graphtool.GC_COMBO_CHART.prototype.include_trendlines_options = function(){
         this.selected_groups.add(parseInt(g_select[i]));
         this.selected_groups_trends.add(parseInt(g_select[i]));
       }
-      $("#group_select_list" ).val(Array.from(this.selected_groups));
+      var arr = []
+      for(select_i in this.selected_groups)
+        arr.push(select_i)
+      $("#group_select_list" ).val(arr);
       $("#group_select_list").trigger("chosen:updated");
       this.drawChart();
     }.bind(this));
@@ -177,7 +180,7 @@ graphtool.GC_COMBO_CHART.prototype.defaultToolTip = function(row, size, value) {
 }
 
 graphtool.GC_COMBO_CHART.prototype.data_initial_setup = function() {
-  this.pivot_results_to_gc_table();
+  this.pivot_results_to_gc_table(['string','datetime','number']);
   this.groups = google.visualization.data.group(this.gc_init_table,
     [0],
     [{'column': 2, 'aggregation': google.visualization.data.sum, 'type': 'number'}]);

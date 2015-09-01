@@ -11,6 +11,23 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:apply-templates />
 </xsl:template>
 
+<xsl:template name="to_js_list">
+  <xsl:param name="arg1"/>
+  <xsl:choose>
+    <xsl:when test="contains($arg1,',')">
+      '<xsl:value-of select="substring-before($arg1,',')"/>',
+      <xsl:call-template name="to_js_list">
+        <xsl:with-param name="arg1">
+          <xsl:value-of select="substring-after($arg1,',')"/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      '<xsl:value-of select="$arg1"/>'
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template name="split-text">
   <xsl:param name="arg1"/>
   <xsl:choose>

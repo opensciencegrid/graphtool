@@ -8,6 +8,7 @@ graphtool.GC_COMBO_CHART = function(){
   
   this.groups                    = null;
   this.data_gc                   = null;
+  this.cumulative                = false;
   this.selected_groups           = new Set();
   this.selected_groups_trends    = new Set();
   google.load("visualization", "1", {packages:["corechart"], callback: this.load_google_callback.bind(this)});
@@ -20,34 +21,60 @@ graphtool.GC_COMBO_CHART.prototype.constructor = graphtool.GC_COMBO_CHART
 // Data Transformation functions 
 //-------------------------------------------------------------------
 
+graphtool.GC_COMBO_CHART.prototype.cumulate = function(){
+  if(this.cumulative){
+    for(var i = 1 ; i < this.data_gc.getNumberOfRows() ; i++){
+      // The first column is the x-axis data
+      for(var j = 1 ; j < this.data_gc.getNumberOfColumns() ; j++){
+        this.data_gc.setCell(i, j, graphtool.GC_COMMON.sum_with_default_nulls(this.data_gc.getValue(i,j),this.data_gc.getValue(i-1,j),0))
+      }
+    }
+  }
+}
+
 graphtool.GC_COMBO_CHART.prototype.to_gc_table_format = function(){
-  var i,j,added = 0;
+  
+  if((typeof this.group_after != "number") || this.group_after < 1){
+    this.group_after = Number.MAX_VALUE;
+  }  
+
+  var i,added = 0;
   var cols = [];
+  var total_grouped = 1;
   for(i=0;i<this.groups.getNumberOfRows();i++){
     if(this.selected_groups.size == 0 || this.selected_groups.has(i)){
       var view_i = new google.visualization.DataView(this.gc_init_table);
       view_i.setRows(view_i.getFilteredRows([{column: 0, value: this.groups.getValue(i, 0)},{column: 1},{column: 2}]));
+      view_i.hideColumns([0]);
       if(added==0){
-        this.data_gc = view_i;
-      }
-      else if(added==1){
-        this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[1,1]],[2],[2])
+        this.data_gc = view_i.toDataTable();
       }
       else{
-        this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[0,1]],cols,[2])
+        this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[0,0]],cols,[1]);
+        if(added >= this.group_after){
+          this.data_gc.addColumn('number')
+          for(var k = 0; k < this.data_gc.getNumberOfRows() ; k++){
+            this.data_gc.setCell(k, added+2, graphtool.GC_COMMON.sum_with_default_nulls(this.data_gc.getValue(k,added),this.data_gc.getValue(k,added+1),0))
+          }
+          this.data_gc.removeColumns(added,2);
+          total_grouped++;
+        }
       }
-      added++;
-      cols.push(added)
+      if(added < this.group_after){
+        added++;
+        cols.push(added)
+      }
     }
   }
-  if(added == 1){
-    this.data_gc = google.visualization.data.join(this.data_gc, this.data_gc, 'full', [[1,1]],[2],[])
-  }
   this.data_gc.setColumnLabel(0, "time")
-  current=1
+  var current=1
   this.chart_properties.trendlines = {}
   for(i=0;i<this.groups.getNumberOfRows();i++){
     if(this.selected_groups.size == 0 || this.selected_groups.has(i)){
+      if(current >= this.group_after){
+        this.data_gc.setColumnLabel(current, "OTHERS ("+total_grouped+")")
+        break;
+      }
       this.data_gc.setColumnLabel(current, this.groups.getValue(i, 0))
       if(this.selected_groups_trends.has(i))
         this.chart_properties.trendlines[current-1] = {visibleInLegend: true}
@@ -55,6 +82,7 @@ graphtool.GC_COMBO_CHART.prototype.to_gc_table_format = function(){
     }
   }
   this.data_gc.sort([{column: 0}])
+  this.cumulate();
 }
 
 
@@ -146,7 +174,7 @@ graphtool.GC_COMBO_CHART.prototype.change_stack_property = function(){
 
 graphtool.GC_COMBO_CHART.prototype.include_stack_options = function(){
   var html_code = "<div><button class='gc_stack_off'>Unstack</button><button class='gc_stack_on'>Stack</button></div>"
-  this.include_options_tab("bars_stack","Stack",html_code);
+  this.include_options_tab("combo_stack","Stack",html_code);
   $(".gc_stack_on, .gc_stack_off").click()
       .button()
       .click(this.change_stack_property.bind(this));
@@ -160,11 +188,42 @@ graphtool.GC_COMBO_CHART.prototype.include_stack_options = function(){
   }  
 }
 
+graphtool.GC_COMBO_CHART.prototype.change_cumulate_property = function(){
+  this.cumulative = !this.cumulative;
+  this.drawChart();
+  if(this.cumulative){
+    $(".gc_cumulative_on").hide()
+    $(".gc_cumulative_off").show()
+  }
+  else{
+    $(".gc_cumulative_on").show()
+    $(".gc_cumulative_off").hide()
+  }
+}
+
+graphtool.GC_COMBO_CHART.prototype.include_cumulate_options = function(){
+  var html_code = "<div><button class='gc_cumulative_on'>Draw cumulative</button><button class='gc_cumulative_off'>Draw non Cumulative</button></div>"
+  this.include_options_tab("combo_cumulate","Cumulate",html_code);
+  $(".gc_cumulative_on, .gc_cumulative_off").click()
+      .button()
+      .click(this.change_cumulate_property.bind(this));
+  if(this.cumulative){
+    $(".gc_cumulative_on").hide()
+    $(".gc_cumulative_off").show()
+  }
+  else{
+    $(".gc_cumulative_on").show()
+    $(".gc_cumulative_off").hide()
+  }  
+}
+
 graphtool.GC_COMBO_CHART.prototype.load_combo_options = function(){
   this.load_default_options_tabs();
   this.include_groups_selection_options();
   this.include_trendlines_options();
   this.include_stack_options();
+  this.include_cumulate_options();
+  this.include_others_options();
 }
 
 //-------------------------------------------------------------------

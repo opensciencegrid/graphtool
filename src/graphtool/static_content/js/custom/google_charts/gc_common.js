@@ -15,6 +15,9 @@ graphtool.GC_COMMON = function(){
   this.chart                       = null;
   this.min_dimensions_px           = 100;
   this.max_dimensions_px           = 3000;
+  this.group_after                 = 20;
+  this.min_others                  = 1;
+  this.max_others                  = 100;
   
   // ui-elements
   this.chart_div                   = $("#chart_div");
@@ -174,6 +177,21 @@ graphtool.GC_COMMON.prototype.include_export_options = function (){
       }.bind(this));
 }
 
+graphtool.GC_COMMON.prototype.include_others_options = function(){
+  var html_code =
+    '<div>'+
+    '<b>Group OTHERS after:</b><span id="g_others_label">'+this.group_after+'</span><div id="g_others_slider" style="width:300px"></div><br/>'+
+    '</div>';
+  this.include_options_tab("others_after_size","Others Group",html_code)
+  $("#g_others_slider").slider({ 
+      min:     this.min_others,
+      max:     this.max_others,
+      value:   this.group_after,
+      change:  function( event, ui ){this.group_after=ui.value;this.drawChart();}.bind(this),
+      slide:   function( event, ui ){$("#g_others_label").text( ui.value );}.bind(this)
+  });
+}
+
 graphtool.GC_COMMON.prototype.load_default_options_tabs = function(){
   this.include_size_options();
   this.include_export_options();
@@ -205,3 +223,11 @@ graphtool.GC_COMMON.format_common_name = function(val){
 //-------------------------------------------------------------------
 //Helper functions 
 //-------------------------------------------------------------------
+
+graphtool.GC_COMMON.sum_with_default_nulls = function(val1,val2,default_null_vall){
+  if(!val1)
+    val1 = default_null_vall;
+  if(!val2)
+    val2 = default_null_vall;
+  return val1 + val2;
+}

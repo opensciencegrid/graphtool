@@ -18,7 +18,14 @@ graphtool.GC_PIE_CHART.prototype.constructor = graphtool.GC_PIE_CHART
 
 graphtool.GC_PIE_CHART.prototype.to_gc_table_format = function(){
   this.gc_init_table.sort({column:1,desc: true})
-  this.data_gc = this.gc_init_table;
+  this.data_gc = this.gc_init_table.clone();
+  var grouped_count = 1
+  while(this.data_gc.getNumberOfRows()>this.group_after){
+    grouped_count++;
+    this.data_gc.setCell(this.group_after-1,0,"OTHERS ("+grouped_count+")") 
+    this.data_gc.setCell(this.group_after-1,1,this.data_gc.getValue(this.group_after-1,1)+this.data_gc.getValue(this.group_after,1))
+    this.data_gc.removeRow(this.group_after)
+  }
 }
 
 
@@ -28,6 +35,7 @@ graphtool.GC_PIE_CHART.prototype.to_gc_table_format = function(){
 
 graphtool.GC_PIE_CHART.prototype.load_pie_options = function(){
   this.load_default_options_tabs();
+  this.include_others_options();  
 }
 
 //-------------------------------------------------------------------

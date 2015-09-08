@@ -137,6 +137,7 @@ src/graphtool/tools/cache.py
 src/graphtool/tools/common.py
 src/graphtool/tools/csv_output.py
 src/graphtool/tools/keepalive.py
+src/graphtool/tools/matplotlib_2_google_charts.py
 src/graphtool/tools/query_output.py
 src/graphtool/tools/treemap.py
 src/graphtool/utilities/__init__.py

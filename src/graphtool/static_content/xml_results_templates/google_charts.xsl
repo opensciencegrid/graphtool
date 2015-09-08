@@ -9,11 +9,29 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <!-- HTML BASIC DEFINITION -->
   <div id="top_spacer" style="width: 100%; height: 40px;">
   </div>
-  <div id="chart_div" style="width: 700px; height: 500px;">
-    <h1>"<xsl:value-of select="title"/>" loading . . .</h1>
-  </div>
-  <div id="table_div">
-  </div>
+  <table border="0">
+    <tr>
+      <td>
+        <div id="chart_div" style="width: 700px; height: 500px;">
+          <h1>"<xsl:value-of select="title"/>" loading . . .</h1>
+        </div>
+        <div id="table_div">
+        </div>
+      </td>
+      <td>
+        <xsl:if test="translate_mp_2_gc = 'TRUE'">
+          <button id="show_mp_img">Show Matplotlib Image</button>
+          <button id="hide_mp_img">Hide Matplotlib Image</button>
+          <script type="text/javascript" >
+            <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/custom/show_hide_mp_old_image.js</xsl:attribute>
+          </script>
+          <script type="text/javascript" >
+            setup_show_hide_button('show_mp_img','hide_mp_img','<xsl:value-of select="url"/>');
+          </script>
+        </xsl:if>
+      </td>
+    </tr>
+  </table>
   <div id="chart_div_options_wrap" style="display: none;">
     <h3>Chart &amp; Export Options:</h3>
     <div id="chart_div_options_wrap_inner_panel" style="overflow:visible">

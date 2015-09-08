@@ -175,7 +175,7 @@ graphtool.GC_COMBO_CHART.prototype.change_stack_property = function(){
 graphtool.GC_COMBO_CHART.prototype.include_stack_options = function(){
   var html_code = "<div><button class='gc_stack_off'>Unstack</button><button class='gc_stack_on'>Stack</button></div>"
   this.include_options_tab("combo_stack","Stack",html_code);
-  $(".gc_stack_on, .gc_stack_off").click()
+  $(".gc_stack_on, .gc_stack_off")
       .button()
       .click(this.change_stack_property.bind(this));
   if(this.chart_properties.isStacked){
@@ -204,7 +204,7 @@ graphtool.GC_COMBO_CHART.prototype.change_cumulate_property = function(){
 graphtool.GC_COMBO_CHART.prototype.include_cumulate_options = function(){
   var html_code = "<div><button class='gc_cumulative_on'>Draw cumulative</button><button class='gc_cumulative_off'>Draw non Cumulative</button></div>"
   this.include_options_tab("combo_cumulate","Cumulate",html_code);
-  $(".gc_cumulative_on, .gc_cumulative_off").click()
+  $(".gc_cumulative_on, .gc_cumulative_off")
       .button()
       .click(this.change_cumulate_property.bind(this));
   if(this.cumulative){

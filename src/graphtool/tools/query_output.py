@@ -138,12 +138,21 @@ class XmlGenerator( QueryHandler ):
     graph_kind = metadata.get('graph_kind',False)
     js_chart_setup = metadata.get('js_chart_setup',False)
     
+    metadata['translate_mp_2_gc'] = False
     if not graph_kind and mpl_2_gc.has_key(graph_type):
       maped_gc = mpl_2_gc[graph_type]
       graph_type = maped_gc['gc_type']
       js_chart_setup = maped_gc['gc_js_setup']
       graph_kind = 'google_charts'
       metadata['translate_mp_2_gc'] = True
+    
+    gen.startElement( 'translate_mp_2_gc',{} )
+    if metadata['translate_mp_2_gc']:
+      gen.characters( 'TRUE' )
+    else:
+      gen.characters( 'FALSE' )
+    gen.endElement( 'translate_mp_2_gc')
+    gen.characters("\n\t\t")
     
     if graph_type and len(graph_type) > 0:
       gen.startElement( 'graph',{} )
@@ -179,7 +188,7 @@ class XmlGenerator( QueryHandler ):
     return gen
 
   def write_graph_url( self, results, metadata, gen, graph_kind):
-    if graph_kind == 'google_charts':
+    if graph_kind == 'google_charts' and not metadata['translate_mp_2_gc']:
       base_url = self.metadata.get('base_url','')
       base = base_url + '/' + metadata.get('name','') + '?'
       kw = metadata.get('given_kw',{})
@@ -189,7 +198,7 @@ class XmlGenerator( QueryHandler ):
       gen.characters( base )
       gen.endElement("url")
       gen.characters('\n\t\t')
-    elif not graph_kind or graph_kind == 'matplotlib':
+    elif not graph_kind or graph_kind == 'matplotlib' or metadata['translate_mp_2_gc']:
       base_url = None
       graphs = metadata.get('grapher',None)
       if graphs and 'base_url' in graphs.metadata:

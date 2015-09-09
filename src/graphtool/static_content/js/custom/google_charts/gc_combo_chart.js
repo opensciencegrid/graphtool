@@ -217,6 +217,39 @@ graphtool.GC_COMBO_CHART.prototype.include_cumulate_options = function(){
   }  
 }
 
+
+graphtool.GC_COMBO_CHART.prototype.change_orientation_property = function(){
+  if(typeof this.chart_properties.orientation === "undefined" || this.chart_properties.orientation == 'horizontal')
+    this.chart_properties.orientation = 'vertical';
+  else
+    this.chart_properties.orientation = 'horizontal';
+  this.drawChart();
+  if(this.chart_properties.orientation == 'horizontal'){
+    $(".gc_orientation_on").hide()
+    $(".gc_orientation_off").show()
+  }
+  else{
+    $(".gc_orientation_on").show()
+    $(".gc_orientation_off").hide()
+  }
+}
+
+graphtool.GC_COMBO_CHART.prototype.include_orientation_options = function(){
+  var html_code = "<div><button class='gc_orientation_off'>Draw Vertical</button><button class='gc_orientation_on'>Draw Horizontal</button></div>"
+  this.include_options_tab("combo_orientation","Orientation",html_code);
+  $(".gc_orientation_on, .gc_orientation_off")
+      .button()
+      .click(this.change_orientation_property.bind(this));
+  if(typeof this.chart_properties.orientation === "undefined" || this.chart_properties.orientation == 'horizontal'){
+    $(".gc_orientation_on").hide()
+    $(".gc_orientation_off").show()
+  }
+  else{
+    $(".gc_orientation_on").show()
+    $(".gc_orientation_off").hide()
+  }  
+}
+
 graphtool.GC_COMBO_CHART.prototype.load_combo_options = function(){
   this.load_default_options_tabs();
   this.include_groups_selection_options();
@@ -224,6 +257,7 @@ graphtool.GC_COMBO_CHART.prototype.load_combo_options = function(){
   this.include_stack_options();
   this.include_cumulate_options();
   this.include_others_options();
+  this.include_orientation_options();
 }
 
 //-------------------------------------------------------------------

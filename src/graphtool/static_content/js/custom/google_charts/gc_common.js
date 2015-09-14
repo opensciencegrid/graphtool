@@ -13,11 +13,14 @@ graphtool.GC_COMMON = function(){
   this.chart_formatters            = {};
   this.data_gc                     = null;
   this.chart                       = null;
+  this.table                       = null;
   this.min_dimensions_px           = 100;
   this.max_dimensions_px           = 3000;
   this.group_after                 = 20;
   this.min_others                  = 1;
   this.max_others                  = 100;
+  this.draw_border                 = false;
+  this.draw_table                  = false;
   
   // ui-elements
   this.chart_div                   = $("#chart_div");
@@ -32,9 +35,57 @@ graphtool.GC_COMMON = function(){
     load_server_data(this);
 }
 
+// Shared properties across multiple charts
+graphtool.GC_COMMON.custom_palette              = false;
+graphtool.GC_COMMON.colors_palette_custom       = [ "#e66266", "#fff8a9", "#7bea81", "#8d4dff", "#ffbc71", "#a57e81",
+                                                               "#baceac", "#00ccff", "#ccffff", "#ff99cc", "#cc99ff", "#ffcc99",
+                                                               "#3366ff", "#33cccc" ];
+graphtool.GC_COMMON.colors_palette_gc           = [ "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6",
+                                                               "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99",
+                                                               "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262",
+                                                               "#5574a6", "#3b3eac", "#b77322", "#16d620", "#b91383", "#f4359e",
+                                                               "#9c5935", "#a9c413", "#2a778d", "#668d1c", "#bea413", "#0c5922",
+                                                               "#743411"];
+
 //-------------------------------------------------------------------
 // Common charts functions 
 //-------------------------------------------------------------------
+
+
+
+// cumulative function must bind the column before usage
+graphtool.GC_COMMON.cumulative_function = function(dataTable, rowNum){
+  var cumulated = 0;
+  for(var i = 0; i <= rowNum; i++)
+    cumulated += dataTable.getValue(i,this.column);
+  return cumulated;
+}
+
+graphtool.GC_COMMON.prototype.set_colors = function(){
+  this.chart_properties.colors = graphtool.GC_COMMON.custom_palette? graphtool.GC_COMMON.colors_palette_custom:graphtool.GC_COMMON.colors_palette_gc;
+}
+
+
+// This method should be defined in each one of the subclasses
+graphtool.GC_COMMON.prototype.calc_draw_table = function(){
+  alert("Error, calc_draw_table function is not defined!");
+}
+
+graphtool.GC_COMMON.prototype.drawChart = function() {
+  this.calc_draw_table();
+  this.set_colors();
+  this.chart.draw(this.data_gc, this.chart_properties);
+  this.drawTable();
+}
+
+graphtool.GC_COMMON.prototype.drawTable = function() {
+  if(this.draw_table && this.table){
+    this.table.draw(this.data_gc, {});
+  }
+  else if(!this.draw_table && this.table){
+    this.table.clearChart();
+  }
+}
 
 graphtool.GC_COMMON.prototype.set_chart_size = function(width,height){
   if(width >= 100)
@@ -64,10 +115,6 @@ graphtool.GC_COMMON.prototype.open_image_as_png = function(){
   };
   var svgAsXML = (new XMLSerializer).serializeToString( svg_node.get(0) );
   loader.src = 'data:image/svg+xml,' + encodeURIComponent( svgAsXML );
-}
-
-graphtool.GC_COMMON.prototype.drawChart = function(ops) {
-  alert("Not implemented yet!")
 }
 
 //-------------------------------------------------------------------
@@ -177,6 +224,38 @@ graphtool.GC_COMMON.prototype.include_export_options = function (){
       }.bind(this));
 }
 
+graphtool.GC_COMMON.prototype.include_table_options = function (){
+  this.include_options_tab("table_ops","Data Table","");
+  this.include_alternating_buttons("table_ops","data_table","Hide Data Table","Show Data Table",
+    function(){
+      this.draw_table = !this.draw_table;
+      this.drawChart();
+    }.bind(this),
+    function(){
+      return (this.draw_table);
+    }.bind(this));
+}
+
+graphtool.GC_COMMON.prototype.include_color_n_border_options = function (){
+  this.include_options_tab("color_n_border_ops","Colors & Border","");
+  this.include_alternating_buttons("color_n_border_ops","color_palette","Google Charts Colors","Gratia Web Colors",
+    function(){
+      graphtool.GC_COMMON.custom_palette = !graphtool.GC_COMMON.custom_palette;
+      this.drawChart();
+    }.bind(this),
+    function(){
+      return (graphtool.GC_COMMON.custom_palette);
+    }.bind(this));
+  this.include_alternating_buttons("color_n_border_ops","borders","Remove Borders","Draw Borders",
+    function(){
+      this.draw_border = !this.draw_border;
+      this.drawChart();
+    }.bind(this),
+    function(){
+      return (this.draw_border);
+    }.bind(this));  
+}
+
 graphtool.GC_COMMON.prototype.include_others_options = function(){
   var html_code =
     '<div>'+
@@ -190,6 +269,39 @@ graphtool.GC_COMMON.prototype.include_others_options = function(){
       change:  function( event, ui ){this.group_after=ui.value;this.drawChart();}.bind(this),
       slide:   function( event, ui ){$("#g_others_label").text( ui.value );}.bind(this)
   });
+}
+
+/**
+ * Params:
+ * ops_id              - Id of the div where the buttons will be included
+ * label_off           - Label on the button when off
+ * label_on            - Label on the button when on
+ * func_alternate_val  - function that alternates the value (must be correctly binded)
+ * func_is_on          - function that tells if the value is on or off, should return a boolean value (must be correctly binded)
+ */
+graphtool.GC_COMMON.prototype.include_alternating_buttons = function(tab_id,ops_id,label_off,label_on,func_alternate_val,func_is_on){
+  var class_off = ops_id+"_off";
+  var class_on  = ops_id+"_on";
+  var html_code = "<button class='"+class_off+"'>"+label_off+"</button><button class='"+class_on+"'>"+label_on+"</button>"
+  $("#"+tab_id).append(html_code);
+  var hide_show_func = function(){
+    if(this.func_is_on.call()){
+      $("."+class_on).hide()
+      $("."+class_off).show()
+    }
+    else{
+      $("."+class_on).show()
+      $("."+class_off).hide()
+    }
+  }
+  hide_show_func = hide_show_func.bind({func_is_on:func_is_on})
+  $("."+class_on+", ."+class_off)
+      .button()
+      .click(function(){
+        func_alternate_val.call();
+        hide_show_func.call();
+      });
+  hide_show_func.call();
 }
 
 graphtool.GC_COMMON.prototype.load_default_options_tabs = function(){

@@ -30,6 +30,18 @@ graphtool.GC_PIE_CHART.prototype.calc_draw_table = function(){
   this.set_pie_properties();
 }
 
+graphtool.GC_PIE_CHART.prototype.get_legend_labels_and_values = function(){
+  var labels = [];
+  var values = [];
+  for(var i = 0 ; i < this.data_gc.getNumberOfRows() ; i++){
+    labels.push(this.data_gc.getValue(i,0));
+    values.push(this.data_gc.getValue(i,1));
+  }
+  for(i in values){
+    values[i] = this.no_decimal_formatter.formatValue(values[i])
+  }
+  return [labels,values];
+}
 
 //-------------------------------------------------------------------
 // UI functions 
@@ -53,7 +65,7 @@ graphtool.GC_PIE_CHART.prototype.set_pie_properties = function() {
   else{
     this.chart_properties.pieSliceBorderColor = null;
   }
-  if(graphtool.GC_COMMON.custom_palette){
+  if(this.custom_palette){
     this.chart_properties.pieSliceTextStyle = {color: 'black'}
   }
   else{    

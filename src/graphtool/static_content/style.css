@@ -155,5 +155,29 @@ div.menuopt ul li a {
   border-left:   1px solid #32a804;
 }
 
+/*
+ * google charts convetion table styles
+ */
+ 
+
+div.gc_conv_wraper {
+  display       : flex;
+  align-items   : center;
+}
+
+div.gc_conv_color_box {
+  display         : inline-block;
+  height          : 16px;
+  width           : 16px;
+  margin          : 2px;
+  border-width    : 1px;
+  border-style    : solid;
+  border-color    : #000000;
+}
+
+div.gc_conv_value_box {
+  display         : flex;
+  align-items     : center;
+}
 
 

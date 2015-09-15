@@ -14,6 +14,7 @@ graphtool.GC_COMMON = function(){
   this.data_gc                     = null;
   this.chart                       = null;
   this.table                       = null;
+  this.conv_column_min_width       = 233;
   this.min_dimensions_px           = 100;
   this.max_dimensions_px           = 3000;
   this.group_after                 = 20;
@@ -21,9 +22,21 @@ graphtool.GC_COMMON = function(){
   this.max_others                  = 100;
   this.draw_border                 = false;
   this.draw_table                  = false;
+  this.custom_palette              = false;
+  this.reverse_colors_to_fit       = null
+  this.colors_palette_custom       = [ "#e66266", "#fff8a9", "#7bea81", "#8d4dff", "#ffbc71", "#a57e81",
+                                       "#baceac", "#00ccff", "#ccffff", "#ff99cc", "#cc99ff", "#ffcc99",
+                                       "#3366ff", "#33cccc" ];
+  this.colors_palette_gc           = [ "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6",
+                                       "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99",
+                                       "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262",
+                                       "#5574a6", "#3b3eac", "#b77322", "#16d620", "#b91383", "#f4359e",
+                                       "#9c5935", "#a9c413", "#2a778d", "#668d1c", "#bea413", "#0c5922",
+                                       "#743411"];  
   
   // ui-elements
   this.chart_div                   = $("#chart_div");
+  this.legend_table                = $("#legend_table");  
   this.chart_div_options           = $("#chart_div_options");
   this.chart_div_options_wrap      = $("#chart_div_options_wrap");
   this.chart_div_options_loaded    = false;
@@ -35,23 +48,9 @@ graphtool.GC_COMMON = function(){
     load_server_data(this);
 }
 
-// Shared properties across multiple charts
-graphtool.GC_COMMON.custom_palette              = false;
-graphtool.GC_COMMON.colors_palette_custom       = [ "#e66266", "#fff8a9", "#7bea81", "#8d4dff", "#ffbc71", "#a57e81",
-                                                               "#baceac", "#00ccff", "#ccffff", "#ff99cc", "#cc99ff", "#ffcc99",
-                                                               "#3366ff", "#33cccc" ];
-graphtool.GC_COMMON.colors_palette_gc           = [ "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6",
-                                                               "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99",
-                                                               "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262",
-                                                               "#5574a6", "#3b3eac", "#b77322", "#16d620", "#b91383", "#f4359e",
-                                                               "#9c5935", "#a9c413", "#2a778d", "#668d1c", "#bea413", "#0c5922",
-                                                               "#743411"];
-
 //-------------------------------------------------------------------
 // Common charts functions 
 //-------------------------------------------------------------------
-
-
 
 // cumulative function must bind the column before usage
 graphtool.GC_COMMON.cumulative_function = function(dataTable, rowNum){
@@ -61,10 +60,60 @@ graphtool.GC_COMMON.cumulative_function = function(dataTable, rowNum){
   return cumulated;
 }
 
-graphtool.GC_COMMON.prototype.set_colors = function(){
-  this.chart_properties.colors = graphtool.GC_COMMON.custom_palette? graphtool.GC_COMMON.colors_palette_custom:graphtool.GC_COMMON.colors_palette_gc;
+// This method should be defined in each one of the subclasses
+graphtool.GC_COMMON.prototype.get_legend_labels_and_values = function(){
+  //[['label1','label2','label3'],['value1','value2','value3']]
+  return [[],[]]
 }
 
+graphtool.GC_COMMON.prototype.generate_html_legend = function(){
+  var labels_and_values = this.get_legend_labels_and_values();
+  var labels_list       = labels_and_values[0];
+  var values_list       = labels_and_values.lenght <= 1? null : labels_and_values[1];
+  var columns           = Math.floor(this.chart_div.width()/this.conv_column_min_width);
+  var col_width         = this.chart_div.width()/columns;
+  var values_defined    = values_list != null;
+  var colors            = this.chart_properties.colors.slice(0);
+  if(this.reverse_colors_to_fit && this.reverse_colors_to_fit >= 0){
+    labels_list.reverse();
+    colors.reverse();
+    if(values_defined)
+      values_list.reverse();
+  }  
+  this.legend_table.empty();
+  var html = "";
+  for(var j ; j < columns ; j++)
+    html += "<col width='"+col_width+"px'/>"
+  for(var i in labels_list){
+    var label = labels_list[i];
+    var value = (values_defined && i < values_list.length)? values_list[i]:null;
+    var color = colors[i%colors.length]
+    if(i==0)
+      html += "<tr>";
+    html += "<td style='width:"+col_width+"px'>"+
+               "<div class='gc_conv_wraper'>"+
+                  "<div class='gc_conv_color_box' style='background-color:"+color+";'/>"+
+                  "<div class='gc_conv_value_box'>"+label+(value? "<br/>("+value+")":"")+"</div>"+
+               "</div>"+
+            "</td>";
+    if((i+1)%columns == 0)
+      html += "</tr>"
+    
+  }
+  this.legend_table.append(html);
+}
+
+graphtool.GC_COMMON.prototype.set_colors = function(){
+  this.chart_properties.colors = this.custom_palette? this.colors_palette_custom:this.colors_palette_gc;
+  if(this.reverse_colors_to_fit && this.reverse_colors_to_fit >= 0){
+    var temp_list = this.chart_properties.colors;
+    this.chart_properties.colors = [];
+    for(var i = 0;i < this.reverse_colors_to_fit; i++){
+      this.chart_properties.colors.splice(0,0,temp_list[i%temp_list.length])
+    }
+  }
+  this.generate_html_legend()
+}
 
 // This method should be defined in each one of the subclasses
 graphtool.GC_COMMON.prototype.calc_draw_table = function(){
@@ -240,11 +289,11 @@ graphtool.GC_COMMON.prototype.include_color_n_border_options = function (){
   this.include_options_tab("color_n_border_ops","Colors & Border","");
   this.include_alternating_buttons("color_n_border_ops","color_palette","Google Charts Colors","Gratia Web Colors",
     function(){
-      graphtool.GC_COMMON.custom_palette = !graphtool.GC_COMMON.custom_palette;
+      this.custom_palette = !this.custom_palette;
       this.drawChart();
     }.bind(this),
     function(){
-      return (graphtool.GC_COMMON.custom_palette);
+      return (this.custom_palette);
     }.bind(this));
   this.include_alternating_buttons("color_n_border_ops","borders","Remove Borders","Draw Borders",
     function(){

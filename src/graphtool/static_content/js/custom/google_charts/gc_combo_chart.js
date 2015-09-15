@@ -52,6 +52,7 @@ graphtool.GC_COMBO_CHART.prototype.cumulate = function(){
 
 graphtool.GC_COMBO_CHART.prototype.right_2_left = function(){
   if(!this.left2right){
+    this.reverse_colors_to_fit = this.data_gc.getNumberOfColumns()-1
     var view = new google.visualization.DataView(this.data_gc);
     // includes the x-axis without modifications
     var conf = [0];
@@ -62,6 +63,9 @@ graphtool.GC_COMBO_CHART.prototype.right_2_left = function(){
     view.setColumns(conf)
     
     this.data_gc = view.toDataTable();
+  }
+  else{
+    this.reverse_colors_to_fit = null;
   }
 }
 
@@ -148,6 +152,22 @@ graphtool.GC_COMBO_CHART.prototype.calc_draw_table = function(){
   this.include_borders();
 }
 
+graphtool.GC_COMBO_CHART.prototype.get_legend_labels_and_values = function(){
+  var labels = [];
+  var values = [];
+  // The first column is the x-axis data
+  for(var j = 1 ; j < this.data_gc.getNumberOfColumns() ; j++){
+    labels.push(this.data_gc.getColumnLabel(j));
+    values.push(0);
+    for(var i = 0 ; i < this.data_gc.getNumberOfRows() ; i++){
+      values[j-1] += this.data_gc.getValue(i,j) == null? 0:this.data_gc.getValue(i,j)
+    }
+  }
+  for(i in values){
+    values[i] = this.no_decimal_formatter.formatValue(values[i])
+  }
+  return [labels,values];
+}
 
 //-------------------------------------------------------------------
 // UI functions 

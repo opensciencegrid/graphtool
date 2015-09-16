@@ -9,7 +9,7 @@ mpl_2_gc = {
                                             isStacked: true,
                                             bar: { groupWidth: '90%'},
                                             legend: {position: 'none'},
-                                            chartArea:{width:'80%',height:'80%'}
+                                            chartArea:{width:'75%',height:'80%'}
                                         };
                                         gc_obj.chart_formatters = {}
                                         """
@@ -20,7 +20,7 @@ mpl_2_gc = {
                                         """
                                         gc_obj.chart_properties = {
                                           legend: {position: 'none'},
-                                          chartArea:{width:'80%',height:'80%'}
+                                          chartArea:{width:'75%',height:'80%'}
                                         };
                                         gc_obj.chart_formatters = {}
                                         """

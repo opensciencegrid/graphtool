@@ -167,8 +167,8 @@ div.gc_conv_wraper {
 
 div.gc_conv_color_box {
   display         : inline-block;
-  height          : 16px;
-  width           : 16px;
+  height          : 10px;
+  width           : 10px;
   margin          : 2px;
   border-width    : 1px;
   border-style    : solid;
@@ -178,6 +178,7 @@ div.gc_conv_color_box {
 div.gc_conv_value_box {
   display         : flex;
   align-items     : center;
+  font-size       : 10px;
 }
 
 

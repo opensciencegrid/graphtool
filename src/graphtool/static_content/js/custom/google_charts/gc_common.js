@@ -14,7 +14,7 @@ graphtool.GC_COMMON = function(){
   this.data_gc                     = null;
   this.chart                       = null;
   this.table                       = null;
-  this.conv_column_min_width       = 233;
+  this.legend_column_min_width     = 150;
   this.min_dimensions_px           = 100;
   this.max_dimensions_px           = 3000;
   this.group_after                 = 20;
@@ -36,7 +36,7 @@ graphtool.GC_COMMON = function(){
   
   // ui-elements
   this.chart_div                   = $("#chart_div");
-  this.legend_table                = $("#legend_table");  
+  this.legend_table                = $("#legend_table");
   this.chart_div_options           = $("#chart_div_options");
   this.chart_div_options_wrap      = $("#chart_div_options_wrap");
   this.chart_div_options_loaded    = false;
@@ -70,7 +70,7 @@ graphtool.GC_COMMON.prototype.generate_html_legend = function(){
   var labels_and_values = this.get_legend_labels_and_values();
   var labels_list       = labels_and_values[0];
   var values_list       = labels_and_values.lenght <= 1? null : labels_and_values[1];
-  var columns           = Math.floor(this.chart_div.width()/this.conv_column_min_width);
+  var columns           = Math.floor(this.chart_div.width()/this.legend_column_min_width);
   var col_width         = this.chart_div.width()/columns;
   var values_defined    = values_list != null;
   var colors            = this.chart_properties.colors.slice(0);
@@ -82,9 +82,7 @@ graphtool.GC_COMMON.prototype.generate_html_legend = function(){
   }  
   this.legend_table.empty();
   var html = "";
-  for(var j ; j < columns ; j++)
-    html += "<col width='"+col_width+"px'/>"
-  for(var i in labels_list){
+  for(var i = 0 ; i < labels_list.length ; i++){
     var label = labels_list[i];
     var value = (values_defined && i < values_list.length)? values_list[i]:null;
     var color = colors[i%colors.length]
@@ -93,7 +91,7 @@ graphtool.GC_COMMON.prototype.generate_html_legend = function(){
     html += "<td style='width:"+col_width+"px'>"+
                "<div class='gc_conv_wraper'>"+
                   "<div class='gc_conv_color_box' style='background-color:"+color+";'/>"+
-                  "<div class='gc_conv_value_box'>"+label+(value? "<br/>("+value+")":"")+"</div>"+
+                  "<div class='gc_conv_value_box'>"+label+(value? " ("+value+")":"")+"</div>"+
                "</div>"+
             "</td>";
     if((i+1)%columns == 0)
@@ -142,7 +140,7 @@ graphtool.GC_COMMON.prototype.set_chart_size = function(width,height){
   if(height >= 100)
     this.chart_div.height(height);
   var selection = this.chart.getSelection();
-  this.chart.draw(this.data_gc, this.chart_properties);
+  this.drawChart();
   this.chart.setSelection(selection);
 }
 

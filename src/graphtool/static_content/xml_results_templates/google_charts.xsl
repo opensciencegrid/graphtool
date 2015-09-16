@@ -15,10 +15,8 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         <div id="chart_div" style="width: 700px; height: 500px;">
           <h1>"<xsl:value-of select="title"/>" loading . . .</h1>
         </div>
-        <div id="legend_div">
-          <table id="legend_table" border="0">
-          </table>
-        </div>
+        <table id="legend_table" border="0">
+        </table>
         <div id="table_div">
         </div>
       </td>

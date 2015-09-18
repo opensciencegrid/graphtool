@@ -35,8 +35,12 @@ graphtool.GC_COMMON = function(){
                                        "#743411"];  
   
   // ui-elements
+  this.full_chart_div              = $("#full_chart_div");
+  this.title_div                   = $("#title_div");
   this.chart_div                   = $("#chart_div");
+  this.legend_div                  = $("#legend_div");
   this.legend_table                = $("#legend_table");
+  this.footer_div                  = $("#footer_div");
   this.chart_div_options           = $("#chart_div_options");
   this.chart_div_options_wrap      = $("#chart_div_options_wrap");
   this.chart_div_options_loaded    = false;
@@ -145,23 +149,37 @@ graphtool.GC_COMMON.prototype.set_chart_size = function(width,height){
 }
 
 graphtool.GC_COMMON.prototype.open_image_as_png = function(){
-  var svg_node          = this.chart_div.find("svg");// Inline SVG element
-  $('body').remove("#temp_div_export")
-  $('body').append('<div id="temp_div_export" style="display:none"/>');//Hidden div for drawing
+  $("#temp_div_export").remove()
+  $('body').append('<div id="temp_div_export" style="display:none;"/>');//Hidden div for drawing
   var temp_div          = $("#temp_div_export");
-  temp_div.append('<canvas id="temp_canvas_export"/>');
-  temp_div.append('<img id="temp_img_export"/>');
-  var can               = $("#temp_canvas_export").get(0);
-  var ctx               = can.getContext('2d');
-  var loader            = $("#temp_img_export").get(0);
-  loader.width  = can.width  = this.chart_div.width();
-  loader.height = can.height = this.chart_div.height();
-  loader.onload = function(){
-    ctx.drawImage( loader, 0, 0, loader.width, loader.height );
-    window.open(can.toDataURL("image/png"),'_blank');
-  };
-  var svgAsXML = (new XMLSerializer).serializeToString( svg_node.get(0) );
-  loader.src = 'data:image/svg+xml,' + encodeURIComponent( svgAsXML );
+  temp_div.append('<canvas id="temp_canvas_background"/>');
+  var temp_canv         = $("#temp_canvas_background").get(0);
+  temp_canv.width       = this.full_chart_div.width();
+  temp_canv.height      = this.full_chart_div.height();
+  // Creates the initial canvas
+  html2canvas(this.full_chart_div.get(0), {
+    onrendered: function(canvas) {
+        var ctx = canvas.getContext('2d');
+        // Create and image loader to draw svg/xml
+        temp_div.append('<img id="temp_img_export_gc"/>');
+        var loader            = $("#temp_img_export_gc").get(0);
+        loader.width  = this.chart_div.width();
+        loader.height = this.chart_div.height();
+        // function called when the img element loads the svg/xml
+        loader.onload = function(){
+          ctx.drawImage( loader, (this.full_chart_div.width()-loader.width)/2, this.title_div.height(), loader.width, loader.height );
+          // sets a background color for the image
+          var ctx_background = temp_canv.getContext('2d');
+          ctx_background.fillStyle="#FFFFFF";
+          ctx_background.fillRect(0,0,canvas.width,canvas.width);
+          ctx_background.drawImage(canvas, 0,0);
+          window.open(temp_canv.toDataURL("image/png"),'_blank');
+        }.bind(this);
+        var svg_node = this.chart_div.find("svg");// Inline SVG element from google charts
+        var svgAsXML = (new XMLSerializer).serializeToString( svg_node.get(0) );
+        loader.src = 'data:image/svg+xml,' + encodeURIComponent( svgAsXML );        
+    }.bind(this)
+  });
 }
 
 //-------------------------------------------------------------------

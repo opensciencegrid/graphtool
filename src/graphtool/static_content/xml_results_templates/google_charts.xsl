@@ -6,17 +6,29 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:template name="google_chart">
 
   <xsl:param name="static_base_url" />
+  <!-- ADDITIONAL JS -->
+  <script type="text/javascript">
+    <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/other/html2canvas.js</xsl:attribute>
+  </script>
   <!-- HTML BASIC DEFINITION -->
   <div id="top_spacer" style="width: 100%; height: 40px;">
   </div>
   <table border="0">
     <tr>
       <td>
-        <div id="chart_div" style="width: 700px; height: 500px;">
-          <h1>"<xsl:value-of select="title"/>" loading . . .</h1>
+        <div id="full_chart_div">
+          <div id="title_div">
+          </div>
+          <div id="chart_div" style="width: 700px; height: 500px;">
+            <h1>"<xsl:value-of select="title"/>" loading . . .</h1>
+          </div>
+          <div id="legend_div">
+            <table id="legend_table" border="0">
+            </table>
+            <div id="footer_div">
+            </div>
+          </div>
         </div>
-        <table id="legend_table" border="0">
-        </table>
         <div id="table_div">
         </div>
       </td>

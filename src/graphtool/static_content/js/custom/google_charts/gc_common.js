@@ -173,7 +173,9 @@ graphtool.GC_COMMON.prototype.open_image_as_png = function(){
           ctx_background.fillStyle="#FFFFFF";
           ctx_background.fillRect(0,0,canvas.width,canvas.width);
           ctx_background.drawImage(canvas, 0,0);
-          window.open(temp_canv.toDataURL("image/png"),'_blank');
+          temp_canv.toBlob(function(blob){
+            saveAs(blob, "gratia-web-report.png");
+          },"image/png");
         }.bind(this);
         var svg_node = this.chart_div.find("svg");// Inline SVG element from google charts
         var svgAsXML = (new XMLSerializer).serializeToString( svg_node.get(0) );

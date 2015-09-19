@@ -10,6 +10,15 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <script type="text/javascript">
     <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/other/html2canvas.js</xsl:attribute>
   </script>
+  <script type="text/javascript">
+    <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/other/Blob.js</xsl:attribute>
+  </script>
+  <script type="text/javascript">
+    <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/other/canvas-toBlob.js</xsl:attribute>
+  </script>
+  <script type="text/javascript">
+    <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/other/FileSaver.min.js</xsl:attribute>
+  </script>
   <!-- HTML BASIC DEFINITION -->
   <div id="top_spacer" style="width: 100%; height: 40px;">
   </div>

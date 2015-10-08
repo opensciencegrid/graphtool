@@ -4,12 +4,14 @@ import types
 import array
 import datetime
 import cStringIO
+import calendar
 
 import numpy
 
 from graphtool.base.xml_config import XmlConfig
 from graphtool.base.iterator   import ObjectIterator
 from graphtool.tools.common import to_timestamp
+from __builtin__ import str
 
 try:
     a = set()
@@ -532,17 +534,40 @@ def complex_pivot_parser( sql_results, pivots="0", results="1", pivot_transform=
     return filtered_results, metadata
   
 """
+  Transformations for multiple pivots
+"""
+
+def comma_separeted_pivot_arr(*pivot, **kw):
+  pivot_concat = []
+  
+  skip_empty_null_unkown = kw.get('exlude-empty-nulls-unkowns','YES')
+  skip_empty_null_unkown = skip_empty_null_unkown != 'NO'
+  for piv_i in pivot:
+    if skip_empty_null_unkown and (piv_i is None or str(piv_i).lower() == "unknown" or str(piv_i).strip() ==''):
+      return None
+    if not piv_i or piv_i is None:
+      pivot_concat.append("Unknown")
+    else:
+      pivot_concat.append(piv_i)
+  return ", ".join(pivot_concat)
+
+"""
   Transformations for javascript plotting libraries
 """
 import json
 import decimal
 
-class DecimalEncoder(json.JSONEncoder):
-    def _iterencode(self, o, markers=None):
-        if isinstance(o, decimal.Decimal):
-            return (str(o) for o in [o])
-        return super(DecimalEncoder, self)._iterencode(o, markers)
+class CustomDecimalDateObjectJSONEncoder(json.JSONEncoder):
+  def default(self, o):
+    if isinstance(o, decimal.Decimal):
+        return str(o) 
+    elif isinstance(o, datetime.datetime):
+        return calendar.timegm(o.timetuple())
+    else:
+        return "Not supported python object."
+    
+
 
 
 def json_pivot_arr(*pivot, **kw):
-  return json.dumps(pivot,separators=(',',':'), cls=DecimalEncoder)[1:-1]
+  return json.dumps(pivot,separators=(',',':'),indent=None, cls=CustomDecimalDateObjectJSONEncoder)[1:-1]

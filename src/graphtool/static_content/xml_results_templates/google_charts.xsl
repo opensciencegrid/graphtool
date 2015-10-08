@@ -55,14 +55,8 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       </td>
     </tr>
   </table>
-  <div id="chart_div_options_wrap" style="display: none;">
-    <h3>Chart &amp; Export Options:</h3>
-    <div id="chart_div_options_wrap_inner_panel" style="overflow:visible">
-      <div id="chart_div_options">
-        <ul>
-        </ul>
-      </div>
-    </div>
+  <div id="options_accordion_wrapper">
+    
   </div>
   
   <!-- JAVASCRIPT -->
@@ -88,16 +82,22 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <script type="text/javascript" >
     var load_server_data = function(gc_obj){
       gc_obj.title = '<xsl:value-of select="title" />';
+      gc_obj.json_query_metadata = <xsl:value-of select="json_query_metadata" />
+      console.log(gc_obj.json_query_metadata);
       gc_obj.data = 
             [
               [
-               [  
+               [
+               
+              <xsl:if test="data/@kind='pivot'">
                   <xsl:call-template name="to_js_list">
                     <xsl:with-param name="arg1">
                       <xsl:value-of select="data/@pivot" />
                     </xsl:with-param>
                   </xsl:call-template>
+               </xsl:if>
                <xsl:if test="data/@kind='pivot-group'">
+                 '<xsl:value-of select="data/@pivot" />'
                  ,'<xsl:value-of select="data/@group" />'
                </xsl:if>
                ],

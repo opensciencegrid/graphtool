@@ -5,7 +5,7 @@ from xml.sax.saxutils import XMLGenerator
 import types, cStringIO, datetime, traceback, sys
 from matplotlib_2_google_charts import mpl_2_gc
 import json
-from graphtool.database.query_handler import DecimalEncoder
+from graphtool.database.query_handler import CustomDecimalDateObjectJSONEncoder
 
 # See if we can use the multiprocessing module in order to offload the CPU
 # heavy graph generations to another process.
@@ -179,6 +179,8 @@ class XmlGenerator( QueryHandler ):
     gen.characters("\n\t\t")
     self.write_sql_vars( results, metadata, gen )
     gen.characters("\n\t\t")
+    self.write_json_metadata(metadata, gen)
+    gen.characters("\n\t\t")
     my_base_url = self.metadata.get('base_url','')
     gen.startElement( 'attr',{'name':'base_url'} )
     gen.characters( my_base_url )
@@ -220,6 +222,12 @@ class XmlGenerator( QueryHandler ):
         gen.characters( base )
         gen.endElement("url")
         gen.characters('\n\t\t')
+
+  def write_json_metadata( self, metadata, gen ):
+    gen.startElement( 'json_query_metadata', {} )
+    gen.characters( str(json.dumps(metadata,separators=(',',':'),indent=2, cls=CustomDecimalDateObjectJSONEncoder)) )
+    gen.endElement( 'json_query_metadata' )
+    gen.characters("\n\t\t")
 
   def write_sql_vars( self, data, metadata, gen ):
     sql_vars = metadata['sql_vars']
@@ -368,7 +376,7 @@ class XmlGenerator( QueryHandler ):
   def groupingAttrs( self, grouping_name, grouping, metadata):
     grouping_attrs = {}
     if metadata.get('translate_mp_2_gc',False):
-      grouping_attrs['value'] = json.dumps(grouping,separators=(',',':'), cls=DecimalEncoder)
+      grouping_attrs['value'] = json.dumps(grouping,separators=(',',':'), cls=CustomDecimalDateObjectJSONEncoder)
     elif grouping_name and str(grouping_name).lower()=='time':
       grouping_attrs['value'] = str(datetime.datetime.utcfromtimestamp(to_timestamp(grouping)))
     else:
@@ -381,7 +389,7 @@ class XmlGenerator( QueryHandler ):
     #  return 'link', {'from':pivot[0],'to':pivot[1]}
     #else:
       if metadata.get('translate_mp_2_gc',False):
-        return 'pivot',{'name':json.dumps(pivot,separators=(',',':'), cls=DecimalEncoder)}
+        return 'pivot',{'name':json.dumps(pivot,separators=(',',':'), cls=CustomDecimalDateObjectJSONEncoder)}
       return 'pivot',{'name':str(pivot)}
 
   def addData( self, data, gen, metadata, coords=None, **kw ):
@@ -400,7 +408,7 @@ class XmlGenerator( QueryHandler ):
           gen.characters("\n\t\t\t\t\t")
           gen.startElement('d',{})
           if metadata.get('translate_mp_2_gc',False):
-            gen.characters( json.dumps(datum,separators=(',',':'), cls=DecimalEncoder) )
+            gen.characters( json.dumps(datum,separators=(',',':'), cls=CustomDecimalDateObjectJSONEncoder) )
           else:
             gen.characters( str(datum) )
           gen.endElement( 'd' )

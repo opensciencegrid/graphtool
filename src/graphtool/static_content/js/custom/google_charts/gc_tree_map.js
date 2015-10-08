@@ -12,11 +12,14 @@ graphtool.GC_TREE_MAP = function(){
   this.num_levels         = 0;
   this.data_in_gc_format  = null;
   this.formatters         = null;
-  google.load("visualization", "1", {packages:["treemap"], callback: this.load_google_callback.bind(this)});
 };
 
 graphtool.GC_TREE_MAP.prototype = graphtool.GC_COMMON.prototype
 graphtool.GC_TREE_MAP.prototype.constructor = graphtool.GC_TREE_MAP
+
+graphtool.GC_TREE_MAP.prototype.get_chart_name =  function(){
+  return "GC_TREE_MAP"
+}
 
 //-------------------------------------------------------------------
 // Data Transformation functions 
@@ -184,7 +187,7 @@ graphtool.GC_TREE_MAP.prototype.table_group_to_table_tree = function (data_var,l
   var data_tree = this.table_group_to_json_tree(data_var,levels_order);
   
   var root;
-  if(typeof this.title == "undefined" || !this.title)
+  if(typeof this.title === "undefined" || !this.title)
     root = ' ';
   else
     root = this.title;
@@ -208,6 +211,11 @@ graphtool.GC_TREE_MAP.prototype.table_group_to_table_tree = function (data_var,l
   }
   this.json_tree_to_table(data_tree,root_id,table,pivot_titles,0)
   return table
+}
+
+graphtool.GC_COMMON.prototype.calc_draw_table = function(){
+  this.data_in_gc_format = this.table_group_to_table_tree(this.data);
+  this.data_gc           = google.visualization.arrayToDataTable(this.data_in_gc_format);
 }
 
 //-------------------------------------------------------------------
@@ -272,11 +280,6 @@ graphtool.GC_TREE_MAP.prototype.include_level_order_options = function(){
     }.bind(this));
 }
 
-graphtool.GC_TREE_MAP.prototype.load_tree_options = function(){
-  this.load_default_options_tabs();
-  this.include_level_order_options();
-}
-
 //-------------------------------------------------------------------
 // Charts functions 
 //-------------------------------------------------------------------
@@ -289,32 +292,24 @@ graphtool.GC_TREE_MAP.prototype.defaultToolTip = function(row, size, value) {
          '</div>';
 }
 
-graphtool.GC_TREE_MAP.prototype.drawChart = function() {
-  this.data_in_gc_format = this.table_group_to_table_tree(this.data);
-  this.data_gc = google.visualization.arrayToDataTable(this.data_in_gc_format);
-  this.chart.draw(this.data_gc, this.chart_properties);
+graphtool.GC_TREE_MAP.prototype.get_required_google_pkgs = function() {
+  return ["treemap"];
 }
 
-graphtool.GC_TREE_MAP.prototype.load_google_callback = function() {
+graphtool.GC_TREE_MAP.prototype.get_object_type = function() {
+  return 'TreeMap';
+}
+
+graphtool.GC_TREE_MAP.prototype.load_chart_options = function() {
+  this.load_default_options_tabs();
+  this.include_table_options();
+  this.include_level_order_options();
+}
+
+graphtool.GC_TREE_MAP.prototype.data_initial_setup = function() {
   // first get number of levels and then load the json formatters description
   this.get_levels_and_results_names(this.data);
   this.load_formatters_json();
-  // create plot afterwards
-  this.chart = new google.visualization.TreeMap(this.chart_div.get(0));
-  if(typeof this.chart_properties == "undefined"){
-    this.chart_properties = {
-        minColor:        '#d00',
-        midColor:        '#dd0',
-        maxColor:        '#0d0',
-        headerHeight:    30,
-        fontColor:       'black',
-        showScale:       true,
-        generateTooltip: this.defaultToolTip.bind(this)
-      }
-  }
-  
-  google.visualization.events.addListener(this.chart, 'ready', this.setup_options_menu.bind(this,this.load_tree_options.bind(this)));
-  this.drawChart()
 }
 
 //-------------------------------------------------------------------
@@ -322,3 +317,4 @@ graphtool.GC_TREE_MAP.prototype.load_google_callback = function() {
 //-------------------------------------------------------------------
 
 tree = new graphtool.GC_TREE_MAP();
+tree.load_google_api_and_draw();

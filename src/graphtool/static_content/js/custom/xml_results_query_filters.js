@@ -40,6 +40,29 @@
         inp_tag.val(inp_tag.val().replace(/[^0-9]/g,''))
     });
   }
+  function setYesNoPicker(inp_id){
+    var inp_tag = $('#'+inp_id);
+    var autocomplete_vals = [
+                              {
+                                label:"YES",
+                                value: 'YES'
+                              },
+                              {
+                                label:"NO",
+                                value:'NO'
+                              }
+                             ];
+    inp_tag.autocomplete({
+      minLength: 0,
+      source: autocomplete_vals
+    });
+    inp_tag.focus(function(){
+        inp_tag.autocomplete( "search", "" );
+    });
+    inp_tag.click(function(){
+        inp_tag.autocomplete( "search", "" );
+    });
+  }  
   function setOpportunisticFilterPicker(inp_id){
     var inp_tag = $('#'+inp_id);
     var autocomplete_vals = [
@@ -70,4 +93,5 @@
   setDateTimePicker('starttime');
   setDateTimePicker('endtime');
   setSpanPicker('span');
+  setYesNoPicker('exlude-empty-nulls-unkowns')
   setOpportunisticFilterPicker('opportunistic-filter');

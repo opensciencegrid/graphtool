@@ -6,15 +6,25 @@ graphtool.GC_PIE_CHART = function(){
   //-------------------------------------------------------------------
   
   this.data_gc            = null;
-  google.load("visualization", "1", {packages:["corechart","table"], callback: this.load_google_callback.bind(this)});
 };
 
 graphtool.GC_PIE_CHART.prototype = graphtool.GC_COMMON.prototype
 graphtool.GC_PIE_CHART.prototype.constructor = graphtool.GC_PIE_CHART
 
+graphtool.GC_PIE_CHART.prototype.get_chart_name =  function(){
+  return "GC_PIE_CHART"
+}
+
 //-------------------------------------------------------------------
 // Data Transformation functions 
 //-------------------------------------------------------------------
+
+graphtool.GC_PIE_CHART.prototype.format_pie = function(){
+  //first column is the label
+  for(var j = 1 ; j < this.data_gc.getNumberOfColumns() ; j++){  
+    this.no_decimal_formatter.format(this.data_gc,j)
+  }
+}
 
 graphtool.GC_PIE_CHART.prototype.calc_draw_table = function(){
   this.gc_init_table.sort({column:1,desc: true})
@@ -26,7 +36,7 @@ graphtool.GC_PIE_CHART.prototype.calc_draw_table = function(){
     this.data_gc.setCell(this.group_after-1,1,this.data_gc.getValue(this.group_after-1,1)+this.data_gc.getValue(this.group_after,1))
     this.data_gc.removeRow(this.group_after)
   }
-  
+  this.format_pie();
   this.set_pie_properties();
 }
 
@@ -42,21 +52,6 @@ graphtool.GC_PIE_CHART.prototype.get_legend_labels_and_values = function(){
   }
   return [labels,values];
 }
-
-//-------------------------------------------------------------------
-// UI functions 
-//-------------------------------------------------------------------
-
-graphtool.GC_PIE_CHART.prototype.load_pie_options = function(){
-  this.load_default_options_tabs();
-  this.include_others_options();
-  this.include_table_options();
-  this.include_color_n_border_options();
-}
-
-//-------------------------------------------------------------------
-// Charts functions 
-//-------------------------------------------------------------------
 
 graphtool.GC_PIE_CHART.prototype.set_pie_properties = function() {
   if(this.draw_border){
@@ -88,23 +83,34 @@ graphtool.GC_PIE_CHART.prototype.set_pie_properties = function() {
       delta -= delta/4;
     }
   }
-  
 }
 
-graphtool.GC_PIE_CHART.prototype.load_google_callback = function() {
+//-------------------------------------------------------------------
+// UI functions 
+//-------------------------------------------------------------------
+
+
+//-------------------------------------------------------------------
+// Charts functions 
+//-------------------------------------------------------------------
+
+graphtool.GC_PIE_CHART.prototype.get_required_google_pkgs = function() {
+  return ["corechart"];
+}
+
+graphtool.GC_PIE_CHART.prototype.get_object_type = function() {
+  return 'PieChart';
+}
+
+graphtool.GC_PIE_CHART.prototype.load_chart_options = function() {
+  this.load_default_options_tabs();
+  this.include_others_options();
+  this.include_table_options();
+  this.include_color_n_border_options();
+}
+
+graphtool.GC_PIE_CHART.prototype.data_initial_setup = function() {
   this.pivot_results_to_gc_table(['string','number']);
-  // create plot afterwards
-  this.chart = new google.visualization.PieChart(this.chart_div.get(0));
-  this.table = new google.visualization.Table(document.getElementById('table_div'));
-  
-  if(typeof this.chart_properties == "undefined"){
-    this.chart_properties = {
-      title:this.title
-    }
-  }
-  
-  google.visualization.events.addListener(this.chart, 'ready', this.setup_options_menu.bind(this,this.load_pie_options.bind(this)));
-  this.drawChart()
 }
 
 //-------------------------------------------------------------------
@@ -112,3 +118,4 @@ graphtool.GC_PIE_CHART.prototype.load_google_callback = function() {
 //-------------------------------------------------------------------
 
 combo = new graphtool.GC_PIE_CHART();
+combo.load_google_api_and_draw();

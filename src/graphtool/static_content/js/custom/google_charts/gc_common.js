@@ -6,24 +6,36 @@ graphtool.GC_COMMON = function(){
   //-------------------------------------------------------------------
   
   // data and google charts variables
-  this.title                       = "";
   this.data                        = {};
-  this.chart_properties            = {};
-  
-  this.chart_formatters            = {};
+  this.title                       = "";
+  this.json_query_metadata         = {};
   this.data_gc                     = null;
   this.chart                       = null;
   this.table                       = null;
-  this.legend_column_min_width     = 150;
-  this.min_dimensions_px           = 100;
-  this.max_dimensions_px           = 3000;
+  this.draw_table                  = false;
+  
+  // specific chart configuration that will be stored as a cookie
+  this.serializable_properties     = ['chart_properties',
+                                      'chart_formatters',
+                                      'group_after',
+                                      'draw_border',
+                                      'custom_palette',
+                                      'reverse_colors_to_fit'];
+  this.chart_properties            = {};
+  this.chart_formatters            = {};
   this.group_after                 = 20;
+  this.draw_border                 = false;
+  this.custom_palette              = false;
+  this.reverse_colors_to_fit       = null;
+  // Object to save the default configuration
+  this.default_config              = null;
+  
+  this.legend_column_min_width     = 150;
+  this.min_dimensions_px           = this.legend_column_min_width;
+  this.max_dimensions_px           = 3000;
   this.min_others                  = 1;
   this.max_others                  = 100;
-  this.draw_border                 = false;
-  this.draw_table                  = false;
-  this.custom_palette              = false;
-  this.reverse_colors_to_fit       = null
+  
   this.colors_palette_custom       = [ "#e66266", "#fff8a9", "#7bea81", "#8d4dff", "#ffbc71", "#a57e81",
                                        "#baceac", "#00ccff", "#ccffff", "#ff99cc", "#cc99ff", "#ffcc99",
                                        "#3366ff", "#33cccc" ];
@@ -33,6 +45,11 @@ graphtool.GC_COMMON = function(){
                                        "#5574a6", "#3b3eac", "#b77322", "#16d620", "#b91383", "#f4359e",
                                        "#9c5935", "#a9c413", "#2a778d", "#668d1c", "#bea413", "#0c5922",
                                        "#743411"];  
+  // formatters - Can only be created after google api is loaded
+  this.no_decimal_formatter        = null;//new google.visualization.NumberFormat({ fractionDigits: 0 }); 
+  this.two_decimal_formatter       = null;//new google.visualization.NumberFormat({ fractionDigits: 2 });
+  this.date_formatter              = null;//new google.visualization.DateFormat({ pattern: "yy/MM/dd" });
+  this.date_time_formatter         = null;//new google.visualization.DateFormat({ pattern: "yy/MM/dd HH:mm" });
   
   // ui-elements
   this.full_chart_div              = $("#full_chart_div");
@@ -41,27 +58,176 @@ graphtool.GC_COMMON = function(){
   this.legend_div                  = $("#legend_div");
   this.legend_table                = $("#legend_table");
   this.footer_div                  = $("#footer_div");
-  this.chart_div_options           = $("#chart_div_options");
-  this.chart_div_options_wrap      = $("#chart_div_options_wrap");
+  this.chart_div_options           = null;// $("#chart_div_options"); Starts as null and gets assigned later
+  this.chart_div_options_accordion      = null;// $("#chart_div_options_accordion"); Starts as null and gets assigned later
   this.chart_div_options_loaded    = false;
   
-  if(typeof js_chart_setup != "undefined" && js_chart_setup instanceof Function)
+  if(typeof js_chart_setup !== "undefined" && js_chart_setup instanceof Function)
     js_chart_setup(this);
   
-  if(typeof load_server_data != "undefined" && load_server_data instanceof Function)
+  if(typeof load_server_data !== "undefined" && load_server_data instanceof Function)
     load_server_data(this);
 }
 
 //-------------------------------------------------------------------
-// Common charts functions 
+// Common charts static functions 
 //-------------------------------------------------------------------
 
+graphtool.GC_COMMON.from_unix_utc_ts = function(ts){
+  var temp_date = new Date();
+  temp_date.setTime(ts*1000+temp_date.getTimezoneOffset()*60*1000);
+  return temp_date;
+}
+        
 // cumulative function must bind the column before usage
 graphtool.GC_COMMON.cumulative_function = function(dataTable, rowNum){
   var cumulated = 0;
   for(var i = 0; i <= rowNum; i++)
     cumulated += dataTable.getValue(i,this.column);
   return cumulated;
+}
+
+graphtool.GC_COMMON.save_cookie = function (name,value) {
+  var d = new Date();
+  d.setTime(d.getTime() + (365*24*60*60*1000));
+  var expires = "expires="+d.toUTCString();
+  document.cookie = name + "=" + JSON.stringify(value) + "; " + expires;
+}
+
+graphtool.GC_COMMON.read_cookie = function (name) {
+  var result = document.cookie.match(new RegExp(name + '=([^;]+)'));
+  result && (result = JSON.parse(result[1]));
+  return result;
+}
+
+graphtool.GC_COMMON.delete_cookie =  function (name) {
+   document.cookie = name+'=; expires=Thu, 01-Jan-1970 00:00:01 GMT';
+}
+
+//-------------------------------------------------------------------
+// Common charts non static functions 
+//-------------------------------------------------------------------
+
+graphtool.GC_COMMON.prototype.get_json_query_metadata_prop =  function(prop){
+  if(typeof this.json_query_metadata !== 'undefined' && this.json_query_metadata != null && typeof this.json_query_metadata[prop] !== 'undefined'){
+    return this.json_query_metadata[prop];
+  }
+  else
+    return null;
+}
+
+graphtool.GC_COMMON.prototype.get_given_kw_prop =  function(prop){
+  var given_kw = this.get_json_query_metadata_prop('given_kw');
+  if( typeof given_kw[prop] !== 'undefined'){
+    return given_kw[prop];
+  }
+  else
+    return null;
+}
+
+// abstract chart name, must be implemented in child objects
+graphtool.GC_COMMON.prototype.get_chart_name =  function(){
+  return "abstract_chart_type"
+}
+
+// Cookie handling functions
+graphtool.GC_COMMON.prototype.get_cookie_name = function () {
+  // priorizes the matplotlib name if exists
+  if(typeof this.json_query_metadata !== 'undefined' && typeof this.json_query_metadata.graph_type !== 'undefined' )
+    return this.json_query_metadata.graph_type;
+  return this.get_chart_name();
+}
+
+graphtool.GC_COMMON.prototype.get_data_2_save =  function(){
+  var data_to_serialize = {}
+  for(i in this.serializable_properties){
+    if(typeof this[this.serializable_properties[i]] !== 'undefined'){
+      data_to_serialize[this.serializable_properties[i]] = this[this.serializable_properties[i]];
+    }
+  }
+  return data_to_serialize;
+}
+
+graphtool.GC_COMMON.prototype.load_config =  function(data_to_load){
+  if(typeof data_to_load == 'object' && data_to_load != null){
+    for(i in this.serializable_properties){
+      if(typeof data_to_load[this.serializable_properties[i]] !== 'undefined'){
+        this[this.serializable_properties[i]] = data_to_load[this.serializable_properties[i]];
+      }
+    }
+  }
+}
+
+// only sets the default config the first time before loading any previously existent cookie
+graphtool.GC_COMMON.prototype.set_default_config =  function(){
+  if(this.default_config == null)
+    this.default_config = this.get_data_2_save()
+}
+
+graphtool.GC_COMMON.prototype.gc_save_cookie =  function(){
+  graphtool.GC_COMMON.save_cookie(this.get_cookie_name(),this.get_data_2_save())
+  alert("Chart configuration saved!");
+}
+
+graphtool.GC_COMMON.prototype.gc_read_cookie =  function(){
+  this.set_default_config();
+  this.load_config(graphtool.GC_COMMON.read_cookie(this.get_cookie_name()));
+}
+
+graphtool.GC_COMMON.prototype.gc_reset_cookie =  function(){
+  graphtool.GC_COMMON.delete_cookie(this.get_cookie_name())
+  this.load_config(this.default_config);
+  this.setup_options_menu(true);
+  this.drawChart();
+  alert("Chart configuration deleted!");  
+}
+
+//-------------------------------------------------------------------
+// Common Drawing and Google Charts functions 
+//-------------------------------------------------------------------
+
+// Requires Override
+graphtool.GC_COMMON.prototype.get_required_google_pkgs = function() {
+  alert("Not google charts packages defined!");
+  return [];
+}
+
+// Requires Override
+graphtool.GC_COMMON.prototype.get_object_type = function() {
+  alert("Not google charts object type defined!");
+  return '';
+}
+
+// Requires Override
+graphtool.GC_COMMON.prototype.load_chart_options = function() {
+  alert("Not chart options defined!");
+  return;
+}
+
+// Requires Override
+graphtool.GC_COMMON.prototype.data_initial_setup = function() {
+  alert("Not data initial setup defined!");  
+  return;
+}
+
+graphtool.GC_COMMON.prototype.load_google_api_and_draw = function() {
+  google.load("visualization", "1", {packages:["table"].concat(this.get_required_google_pkgs()), callback: this.load_google_callback.bind(this)});
+}
+
+graphtool.GC_COMMON.prototype.load_google_callback = function() {
+  this.no_decimal_formatter        = new google.visualization.NumberFormat({ fractionDigits: 0 });
+  this.two_decimal_formatter       = new google.visualization.NumberFormat({ fractionDigits: 2 });
+  this.date_formatter              = new google.visualization.DateFormat({ pattern: "yyyy/MM/dd" });
+  this.date_time_formatter         = new google.visualization.DateFormat({ pattern: "yy/MM/dd HH:mm" });
+  this.data_initial_setup();
+  this.chart = new (google.visualization[this.get_object_type()].bind(google.visualization,this.chart_div.get(0)));
+  this.table = new google.visualization.Table(document.getElementById('table_div'));
+  if(typeof this.chart_properties === "undefined"){
+    this.chart_properties = {}
+  }
+  google.visualization.events.addListener(this.chart, 'ready', this.setup_options_menu.bind(this));
+  this.gc_read_cookie();
+  this.drawChart();
 }
 
 // This method should be defined in each one of the subclasses
@@ -90,7 +256,7 @@ graphtool.GC_COMMON.prototype.generate_html_legend = function(){
     var label = labels_list[i];
     var value = (values_defined && i < values_list.length)? values_list[i]:null;
     var color = colors[i%colors.length]
-    if(i==0)
+    if((i)%columns == 0)    
       html += "<tr>";
     html += "<td style='width:"+col_width+"px'>"+
                "<div class='gc_conv_wraper'>"+
@@ -106,6 +272,7 @@ graphtool.GC_COMMON.prototype.generate_html_legend = function(){
 }
 
 graphtool.GC_COMMON.prototype.set_colors = function(){
+  // This is required to be able to draw bars descending keeping the same color order
   this.chart_properties.colors = this.custom_palette? this.colors_palette_custom:this.colors_palette_gc;
   if(this.reverse_colors_to_fit && this.reverse_colors_to_fit >= 0){
     var temp_list = this.chart_properties.colors;
@@ -114,7 +281,6 @@ graphtool.GC_COMMON.prototype.set_colors = function(){
       this.chart_properties.colors.splice(0,0,temp_list[i%temp_list.length])
     }
   }
-  this.generate_html_legend()
 }
 
 // This method should be defined in each one of the subclasses
@@ -122,10 +288,23 @@ graphtool.GC_COMMON.prototype.calc_draw_table = function(){
   alert("Error, calc_draw_table function is not defined!");
 }
 
+// Must be implemented in the child classes
+graphtool.GC_COMMON.prototype.get_non_saveable_chart_props = function() {
+  return {}
+}
+
 graphtool.GC_COMMON.prototype.drawChart = function() {
   this.calc_draw_table();
   this.set_colors();
-  this.chart.draw(this.data_gc, this.chart_properties);
+  this.generate_html_legend()
+  var computed_props = {};
+  for(prop in this.chart_properties)
+    computed_props[prop] = this.chart_properties[prop];
+  // Overrides the saveable properties with the chart specific ones
+  var additional_props = this.get_non_saveable_chart_props();
+  for(prop in additional_props)
+    computed_props[prop] = additional_props[prop];  
+  this.chart.draw(this.data_gc, computed_props);
   this.drawTable();
 }
 
@@ -139,9 +318,9 @@ graphtool.GC_COMMON.prototype.drawTable = function() {
 }
 
 graphtool.GC_COMMON.prototype.set_chart_size = function(width,height){
-  if(width >= 100)
+  if(width >= min_dimensions_px && width <= this.max_dimensions_px)
     this.chart_div.width(width);
-  if(height >= 100)
+  if(height >= 100 && height <= this.max_dimensions_px)
     this.chart_div.height(height);
   var selection = this.chart.getSelection();
   this.drawChart();
@@ -167,6 +346,9 @@ graphtool.GC_COMMON.prototype.open_image_as_png = function(){
         loader.height = this.chart_div.height();
         // function called when the img element loads the svg/xml
         loader.onload = function(){
+          // Clears the background of the google chart and draws it
+          ctx.fillStyle="#FFFFFF";
+          ctx.fillRect(0,0,loader.width,loader.height);
           ctx.drawImage( loader, (this.full_chart_div.width()-loader.width)/2, this.title_div.height(), loader.width, loader.height );
           // sets a background color for the image
           var ctx_background = temp_canv.getContext('2d');
@@ -216,14 +398,11 @@ graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(column_types)
     }
     else{
       for(j in date_columns){
-        temp_date = new Date();
-        temp_date.setTime(pivot_n_results[date_columns[j]]*1000);
-        pivot_n_results[date_columns[j]] = temp_date;
+        pivot_n_results[date_columns[j]] = graphtool.GC_COMMON.from_unix_utc_ts(pivot_n_results[date_columns[j]]);
       }
       this.gc_init_table.addRow(pivot_n_results);
     }
   }
-  this.no_decimal_formatter        = new google.visualization.NumberFormat({ fractionDigits: 0 });
   for(j in num_columns){  
     this.no_decimal_formatter.format(this.gc_init_table,num_columns[j])
   }
@@ -233,23 +412,36 @@ graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(column_types)
 // Common UI functions 
 //-------------------------------------------------------------------
   
-graphtool.GC_COMMON.prototype.setup_options_menu = function(load_tabs_func){
-  this.chart_div_options_wrap.show({
-    duration: 0,
-    queue: true,
-    complete: function(){
-      if(!this.chart_div_options_loaded){
-        load_tabs_func();
-        this.chart_div_options.tabs();
-        this.chart_div_options_wrap.accordion({
-          collapsible: true,
-          active: false,
-          heightStyle: "content"
-        });
-        this.chart_div_options_loaded = true;
-      }
-    }.bind(this)
-  });
+graphtool.GC_COMMON.prototype.setup_options_menu = function(force_reload){
+  if(typeof force_reload !== 'undefined' && force_reload==true){
+    $("#options_accordion_wrapper").empty();
+    this.chart_div_options_loaded = false;
+  }
+  if(!this.chart_div_options_loaded){
+    $("#options_accordion_wrapper").html(  '<div id="chart_div_options_accordion">'+
+                                            '<h3>Chart &amp; Export Options:</h3>'+
+                                            '<div id="chart_div_options_accordion_inner_panel" style="overflow:visible">'+
+                                              '<button id="save_chart_config">Save Current Chart Configuration</button>'+
+                                              '<button id="reset_chart_config">Reset Chart Configuration</button>'+
+                                              '<div id="chart_div_options">'+
+                                                '<ul>'+
+                                                '</ul>'+
+                                              '</div>'+
+                                            '</div>'+
+                                          '</div>');
+    $("#save_chart_config").button().click(this.gc_save_cookie.bind(this));
+    $("#reset_chart_config").button().click(this.gc_reset_cookie.bind(this));
+    this.chart_div_options_accordion =$("#chart_div_options_accordion");    
+    this.chart_div_options      = $("#chart_div_options");
+    this.load_chart_options();
+    this.chart_div_options.tabs();
+    this.chart_div_options_accordion.accordion({
+      collapsible: true,
+      active: false,
+      heightStyle: "content"
+    });
+    this.chart_div_options_loaded = true;
+  }
 }
 
 graphtool.GC_COMMON.prototype.include_options_tab = function(id,title,html_code){

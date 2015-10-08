@@ -157,6 +157,12 @@ src/graphtool/static_content/js/numeral/languages/sk.min.js
 src/graphtool/static_content/js/numeral/languages/th.min.js
 src/graphtool/static_content/js/numeral/languages/tr.min.js
 src/graphtool/static_content/js/numeral/languages/uk-UA.min.js
+src/graphtool/static_content/js/other/Blob.js
+src/graphtool/static_content/js/other/FileSaver.min.js
+src/graphtool/static_content/js/other/__init__.py
+src/graphtool/static_content/js/other/__init__.pyc
+src/graphtool/static_content/js/other/canvas-toBlob.js
+src/graphtool/static_content/js/other/html2canvas.js
 src/graphtool/static_content/xml_results_templates/__init__.py
 src/graphtool/static_content/xml_results_templates/__init__.pyc
 src/graphtool/static_content/xml_results_templates/google_charts.xsl

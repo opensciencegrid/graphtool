@@ -67,11 +67,43 @@ graphtool.GC_COMMON = function(){
   
   if(typeof load_server_data !== "undefined" && load_server_data instanceof Function)
     load_server_data(this);
+  
+  // Load server provided keywords
+  this.starttime                   = this.get_given_kw_prop('starttime');
+  this.endtime                     = this.get_given_kw_prop('endtime');
+  if(this.starttime != null)
+    this.starttime                 = graphtool.GC_COMMON.from_unix_utc_ts(this.starttime);
+  if(this.endtime != null)
+    this.endtime                   = graphtool.GC_COMMON.from_unix_utc_ts(this.endtime);
 }
 
 //-------------------------------------------------------------------
 // Common charts static functions 
 //-------------------------------------------------------------------
+
+graphtool.GC_COMMON.componentToHex = function(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+graphtool.GC_COMMON.rgbToHex = function(r, g, b) {
+  return "#" + graphtool.GC_COMMON.componentToHex(r) + graphtool.GC_COMMON.componentToHex(g) + graphtool.GC_COMMON.componentToHex(b);
+}
+
+graphtool.GC_COMMON.hexToRgb = function(hex) {
+  // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+  var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+      return r + r + g + g + b + b;
+  });
+
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+  } : null;
+}
 
 graphtool.GC_COMMON.from_unix_utc_ts = function(ts){
   var temp_date = new Date();
@@ -214,6 +246,12 @@ graphtool.GC_COMMON.prototype.load_google_api_and_draw = function() {
   google.load("visualization", "1", {packages:["table"].concat(this.get_required_google_pkgs()), callback: this.load_google_callback.bind(this)});
 }
 
+//Must be implemented in the cubclasses and will be invoked after the chart is initialized
+// can be used to register event listeners
+graphtool.GC_COMMON.prototype.post_chart_init = function() {
+  //Do nothing
+}
+
 graphtool.GC_COMMON.prototype.load_google_callback = function() {
   this.no_decimal_formatter        = new google.visualization.NumberFormat({ fractionDigits: 0 });
   this.two_decimal_formatter       = new google.visualization.NumberFormat({ fractionDigits: 2 });
@@ -222,6 +260,7 @@ graphtool.GC_COMMON.prototype.load_google_callback = function() {
   this.data_initial_setup();
   this.chart = new (google.visualization[this.get_object_type()].bind(google.visualization,this.chart_div.get(0)));
   this.table = new google.visualization.Table(document.getElementById('table_div'));
+  this.post_chart_init();
   if(typeof this.chart_properties === "undefined"){
     this.chart_properties = {}
   }
@@ -293,18 +332,25 @@ graphtool.GC_COMMON.prototype.get_non_saveable_chart_props = function() {
   return {}
 }
 
+// Must be implemented in the child classes
+graphtool.GC_COMMON.prototype.post_draw = function() {
+  // Do nothing
+  return;
+}
+
 graphtool.GC_COMMON.prototype.drawChart = function() {
   this.calc_draw_table();
   this.set_colors();
-  this.generate_html_legend()
   var computed_props = {};
   for(prop in this.chart_properties)
     computed_props[prop] = this.chart_properties[prop];
   // Overrides the saveable properties with the chart specific ones
   var additional_props = this.get_non_saveable_chart_props();
   for(prop in additional_props)
-    computed_props[prop] = additional_props[prop];  
+    computed_props[prop] = additional_props[prop];
   this.chart.draw(this.data_gc, computed_props);
+  this.post_draw();
+  this.generate_html_legend();
   this.drawTable();
 }
 
@@ -318,9 +364,9 @@ graphtool.GC_COMMON.prototype.drawTable = function() {
 }
 
 graphtool.GC_COMMON.prototype.set_chart_size = function(width,height){
-  if(width >= min_dimensions_px && width <= this.max_dimensions_px)
+  if(width >= this.min_dimensions_px && width <= this.max_dimensions_px)
     this.chart_div.width(width);
-  if(height >= 100 && height <= this.max_dimensions_px)
+  if(height >= this.min_dimensions_px && height <= this.max_dimensions_px)
     this.chart_div.height(height);
   var selection = this.chart.getSelection();
   this.drawChart();

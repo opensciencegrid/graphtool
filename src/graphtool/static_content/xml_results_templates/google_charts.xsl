@@ -83,7 +83,6 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     var load_server_data = function(gc_obj){
       gc_obj.title = '<xsl:value-of select="title" />';
       gc_obj.json_query_metadata = <xsl:value-of select="json_query_metadata" />
-      console.log(gc_obj.json_query_metadata);
       gc_obj.data = 
             [
               [

@@ -8,19 +8,14 @@ graphtool.GC_COMBO_CHART = function(){
   
   this.serializable_properties.push("cumulative")
   this.serializable_properties.push("left2right")
-  
-  this.groups                    = null;
-  this.data_gc                   = null;
   this.cumulative                = false;
   this.left2right                = false;
+  
+  this.groups                    = null;
+  this.groups_views              = [];
+  this.data_gc                   = null;
   this.selected_groups           = new Set();
   this.selected_groups_trends    = new Set();
-  this.starttime                 = this.get_given_kw_prop('starttime');
-  this.endtime                   = this.get_given_kw_prop('endtime');
-  if(this.starttime != null)
-    this.starttime                 = graphtool.GC_COMMON.from_unix_utc_ts(this.starttime);
-  if(this.endtime != null)
-    this.endtime                   = graphtool.GC_COMMON.from_unix_utc_ts(this.endtime);
   this.span                      = this.get_given_kw_prop('span');
   this.column_label = this.get_json_query_metadata_prop('column_names')
   this.column_units = this.get_json_query_metadata_prop('column_units')
@@ -40,7 +35,7 @@ graphtool.GC_COMBO_CHART.prototype.get_chart_name =  function(){
 
 graphtool.GC_COMBO_CHART.prototype.get_non_saveable_chart_props = function() {
   var additional_props = {};
-  additional_props.title = this.title;
+  additional_props.title = (this.cumulative? "Cumulative ":"")+ this.title;
   additional_props.vAxis = {title:this.v_axis_label}
   additional_props.hAxis = {
                               gridlines: {
@@ -50,11 +45,19 @@ graphtool.GC_COMBO_CHART.prototype.get_non_saveable_chart_props = function() {
                                 }
                               }
                             }
-  if(this.starttime && this.endtime){
+  if(this.starttime && this.endtime && this.span){
+    var min = new Date(), max = new Date();
+    min.setTime(this.starttime.getTime()-this.span*1000/2);
+    max.setTime(this.endtime.getTime()-this.span*1000/2);
     additional_props.hAxis.viewWindow= {
-                                          min: this.starttime,
-                                          max: this.endtime
+                                          min: min,
+                                          max: max
                                         }
+  }
+  if(typeof this.chart_properties.orientation !== "undefined" && this.chart_properties.orientation == 'vertical'){
+    var temp_axis_conf = additional_props.vAxis;
+    additional_props.vAxis = additional_props.hAxis;
+    additional_props.hAxis = temp_axis_conf;
   }
   return additional_props;
 }
@@ -77,28 +80,30 @@ graphtool.GC_COMBO_CHART.prototype.format_combo = function(){
 
 graphtool.GC_COMBO_CHART.prototype.cumulate = function(){
   if(this.cumulative){
-    var view = new google.visualization.DataView(this.data_gc);
-    // includes the x-axis without modifications
-    var conf = [0];
-    // The first column is the x-axis data
-    for(var i = 1 ; i < this.data_gc.getNumberOfColumns() ; i++){
-      conf.push({
-        calc:graphtool.GC_COMMON.cumulative_function.bind({column:i}), 
-        type:'number',
-        label:this.data_gc.getColumnLabel(i)
-      })
-    }
-    view.setColumns(conf)
     
-    this.data_gc = view.toDataTable();
-    
-    // TODO: Check which version is more efficient
-//    for(var i = 1 ; i < this.data_gc.getNumberOfRows() ; i++){
-//      // The first column is the x-axis data
-//      for(var j = 1 ; j < this.data_gc.getNumberOfColumns() ; j++){
-//        this.data_gc.setCell(i, j, graphtool.GC_COMMON.sum_with_default_nulls(this.data_gc.getValue(i,j),this.data_gc.getValue(i-1,j),0))
-//      }
+    // TODO: Can be achieved with the google charts api, but is not very efficient
+//    var view = new google.visualization.DataView(this.data_gc);
+//    // includes the x-axis without modifications
+//    var conf = [0];
+//    // The first column is the x-axis data
+//    for(var i = 1 ; i < this.data_gc.getNumberOfColumns() ; i++){
+//      conf.push({
+//        calc:graphtool.GC_COMMON.cumulative_function.bind({column:i}), 
+//        type:'number',
+//        label:this.data_gc.getColumnLabel(i)
+//      })
 //    }
+//    view.setColumns(conf)
+//    
+//    this.data_gc = view.toDataTable();
+
+    // more efficient way to calculate the cumulative values
+    for(var i = 1 ; i < this.data_gc.getNumberOfRows() ; i++){
+      // The first column is the x-axis data
+      for(var j = 1 ; j < this.data_gc.getNumberOfColumns() ; j++){
+        this.data_gc.setCell(i, j, graphtool.GC_COMMON.sum_with_default_nulls(this.data_gc.getValue(i,j),this.data_gc.getValue(i-1,j),0))
+      }
+    }
   }
 }
 
@@ -156,23 +161,30 @@ graphtool.GC_COMBO_CHART.prototype.calc_draw_table = function(){
   var i,added = 0;
   var cols = [];
   var total_grouped = 1;
+  var others_group = {};
+  var obj_others_group = {};
   for(i=0;i<this.groups.getNumberOfRows();i++){
     if(this.selected_groups.size == 0 || this.selected_groups.has(i)){
-      var view_i = new google.visualization.DataView(this.gc_init_table);
-      view_i.setRows(view_i.getFilteredRows([{column: 0, value: this.groups.getValue(i, 0)},{column: 1},{column: 2}]));
-      view_i.hideColumns([0]);
+      var view_i = this.groups_views[i];
       if(added==0){
         this.data_gc = view_i.toDataTable();
       }
       else{
-        this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[0,0]],cols,[1]);
         if(added >= this.group_after){
-          this.data_gc.addColumn('number')
-          for(var k = 0; k < this.data_gc.getNumberOfRows() ; k++){
-            this.data_gc.setCell(k, added+2, graphtool.GC_COMMON.sum_with_default_nulls(this.data_gc.getValue(k,added),this.data_gc.getValue(k,added+1),0))
+          var key = null;
+          for(var k = 0 ; k < view_i.getNumberOfRows() ; k++){
+            key = view_i.getValue(k,0)
+            if(!(key in others_group)){
+              others_group[key] = 0;
+              obj_others_group[key] = view_i.getValue(k,0);
+            }
+            others_group[key] += view_i.getValue(k,1)
           }
-          this.data_gc.removeColumns(added,2);
+//          this.data_gc.addColumn('number')
           total_grouped++;
+        }
+        else{
+          this.data_gc = google.visualization.data.join(this.data_gc, view_i, 'full', [[0,0]],cols,[1]);
         }
       }
       if(added < this.group_after){
@@ -181,6 +193,21 @@ graphtool.GC_COMBO_CHART.prototype.calc_draw_table = function(){
       }
     }
   }
+  // Joins the grouped data of "OTHERS"
+  if( Object.keys(others_group).length > 0){
+    var data_others = new google.visualization.DataTable();
+    data_others.addColumn('datetime');
+    data_others.addColumn('number');
+    for(key in others_group){
+      data_others.addRow([obj_others_group[key],others_group[key]]);
+    }
+    this.data_gc = google.visualization.data.join(this.data_gc, data_others, 'full', [[0,0]],cols,[1]);
+    for(k = 0; k < this.data_gc.getNumberOfRows() ; k++){
+      this.data_gc.setCell(k, added, graphtool.GC_COMMON.sum_with_default_nulls(this.data_gc.getValue(k,added),this.data_gc.getValue(k,added+1),0))
+    }
+    this.data_gc.removeColumns(added+1,1);
+  }
+  
   // Sets the column labels according to the selected groups and include the trendlines
   this.data_gc.setColumnLabel(0, "time")
   var current=1
@@ -392,6 +419,40 @@ graphtool.GC_COMBO_CHART.prototype.data_initial_setup = function() {
     [0],
     [{'column': 2, 'aggregation': google.visualization.data.sum, 'type': 'number'}]);
   this.groups.sort([{column: 1,desc: true}])
+  
+  var groups_dict  = {}
+  var group_name_i = null;
+  var group_i_data = null
+  var date_i       = null;
+  var str_date_i   = null;
+  var date_i_data  = null;
+  for(var i=0;i<this.gc_init_table.getNumberOfRows();i++){
+    group_name_i = this.gc_init_table.getValue(i,0)
+    if(!(group_name_i in groups_dict)){
+      groups_dict[group_name_i] = {}
+    }
+    group_i_data = groups_dict[group_name_i];
+    date_i = this.gc_init_table.getValue(i,1);
+    str_date_i = String(date_i);
+    if(!(str_date_i in group_i_data)){
+      group_i_data[str_date_i] = {date:date_i,sum:0}
+    }
+    date_i_data = group_i_data[str_date_i];
+    date_i_data.sum += this.gc_init_table.getValue(i,2);
+  }
+  for(i=0;i<this.groups.getNumberOfRows();i++){
+    group_i_data = groups_dict[this.groups.getValue(i,0)];
+    var data_table_group_i = new google.visualization.DataTable();
+    data_table_group_i.addColumn('datetime');
+    data_table_group_i.addColumn('number');
+    for(key in group_i_data){
+      data_table_group_i.addRow([group_i_data[key].date,group_i_data[key].sum]);
+    }
+//    var view_i = ;
+//    view_i.setRows(view_i.getFilteredRows([{column: 0, value: this.groups.getValue(i, 0)},{column: 1},{column: 2}]));
+//    view_i.hideColumns([0]);
+    this.groups_views.push(new google.visualization.DataView(data_table_group_i))
+  }
 }
 
 //-------------------------------------------------------------------

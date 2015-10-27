@@ -11,6 +11,23 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:apply-templates />
 </xsl:template>
 
+<xsl:template name="to_js_list">
+  <xsl:param name="arg1"/>
+  <xsl:choose>
+    <xsl:when test="contains($arg1,',')">
+      '<xsl:value-of select="substring-before($arg1,',')"/>',
+      <xsl:call-template name="to_js_list">
+        <xsl:with-param name="arg1">
+          <xsl:value-of select="substring-after($arg1,',')"/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      '<xsl:value-of select="$arg1"/>'
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template name="split-text">
   <xsl:param name="arg1"/>
   <xsl:choose>
@@ -108,10 +125,12 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
             </tr>
           </thead>
           <xsl:for-each select="sqlvars/var">
-            <tr>
-              <td> <xsl:value-of select="@name" /> </td>
-              <td> <input type="text" id="{@name}" name="{@name}" value="{.}" /> </td>
-            </tr>
+            <xsl:if test="@name!='sql_dynamic_modif_func_mod_name' and @name!='sql_dynamic_modif_func'">
+              <tr>
+                <td> <xsl:value-of select="@name" /> </td>
+                <td> <input type="text" id="{@name}" name="{@name}" value="{.}" /> </td>
+              </tr>
+            </xsl:if>
           </xsl:for-each>
         </table>
         <input type="submit" value="Query again"/>
@@ -324,6 +343,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <link rel="stylesheet" type="text/css">
       <xsl:attribute name="href"> <xsl:value-of select="$static_base_url"/>/js/jquery/jquery.datetimepicker.css</xsl:attribute>
     </link>
+    <link rel="stylesheet" type="text/css">
+      <xsl:attribute name="href"> <xsl:value-of select="$static_base_url"/>/js/jquery/ext/choosen/chosen.min.css</xsl:attribute>
+    </link>
     
     <!-- Javascript files loading -->
     <script type="text/javascript">
@@ -337,6 +359,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     </script>
     <script type="text/javascript">
       <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/numeral/numeral.min.js</xsl:attribute>
+    </script>
+    <script type="text/javascript">
+      <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/jquery/ext/choosen/chosen.jquery.min.js</xsl:attribute>
     </script>
   
     <!-- Custom Javascript  -->

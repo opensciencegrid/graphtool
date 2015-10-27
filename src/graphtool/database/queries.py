@@ -4,6 +4,7 @@ import logging
 from graphtool.base.xml_config import XmlConfig, import_module
 from graphtool.database import DatabaseInfoV2, connection_manager
 from graphtool.tools.common import convert_to_datetime, to_timestamp
+import traceback
 
 log = logging.getLogger("GraphTool.Connection_Manager")
 
@@ -130,6 +131,7 @@ class SqlQuery( XmlConfig ):
         try:
           results = self.queries_obj.execute_sql( sql_string, sql_vars, **vars )
         except Exception, e:
+          log.error("Error executing SQL:\n%s"%traceback.format_exc())
           query_error = e
       else:
         results = []
@@ -148,6 +150,7 @@ class SqlQuery( XmlConfig ):
             except Exception, e:
               sem.release()
               error_lock.acquire()
+              log.error("Error executing SQL:\n%s"%traceback.format_exc())
               query_error.extend([e])
               error_lock.release()
         for conn in agg:

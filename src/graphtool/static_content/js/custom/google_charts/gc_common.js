@@ -106,7 +106,9 @@ graphtool.GC_COMMON.hexToRgb = function(hex) {
 }
 
 graphtool.GC_COMMON.from_unix_utc_ts = function(ts){
-  var temp_date = new Date();
+  // Daylight Savings
+  // Should initialize the date with the timestamp to obtain the offset of that specific time
+  var temp_date = new Date(ts*1000);
   temp_date.setTime(ts*1000+temp_date.getTimezoneOffset()*60*1000);
   return temp_date;
 }

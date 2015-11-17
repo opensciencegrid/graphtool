@@ -13,7 +13,7 @@ class DynamicSQLFuncSecurity(Exception):
   
   @staticmethod
   def isAuthorized(mod_name,func_name):
-    return DynamicSQLFuncSecurity.__mods_funcs_whitelist.__contains__("%s.%s"%(mod_name,func_name))
+    return ("%s.%s"%(mod_name,func_name)) in DynamicSQLFuncSecurity.__mods_funcs_whitelist
   
   @staticmethod
   def validateAuthorization(mod_name,func_name):

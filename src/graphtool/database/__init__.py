@@ -4,6 +4,28 @@ from graphtool.base import GraphToolInfo
 from graphtool.base.xml_config import XmlConfig
 import logging
 
+class DynamicSQLFuncSecurity(Exception):
+  __mods_funcs_whitelist = set()
+  
+  @staticmethod
+  def registerAuthorizedModAndFunc(mod_name,func_name):
+    DynamicSQLFuncSecurity.__mods_funcs_whitelist.add("%s.%s"%(mod_name,func_name)) 
+  
+  @staticmethod
+  def isAuthorized(mod_name,func_name):
+    return DynamicSQLFuncSecurity.__mods_funcs_whitelist.__contains__("%s.%s"%(mod_name,func_name))
+  
+  @staticmethod
+  def validateAuthorization(mod_name,func_name):
+    if not DynamicSQLFuncSecurity.isAuthorized(mod_name, func_name):
+      raise DynamicSQLFuncSecurityException()
+
+class DynamicSQLFuncSecurityException(Exception):
+  plot_desc_text = "The selected Module and or Function is not authorized to be executed."
+  
+class DynamicSQLFuncException(Exception):
+  plot_desc_text = "An error occurred while executing the dynamic SQL function."
+
 class NoConnectionWithDBException(Exception):
   plot_desc_text = "Could not connect with the Database."
 
@@ -206,20 +228,21 @@ class DatabaseInfoV2( XmlConfig ):
         sql_string = mysql_util.reduce_regexp_usage(str(sql_string), sql_var)
     # Dynamic SQL modifier function call
     sql_dynamic_modif_func_mod_name = None
+    sql_dynamic_modif_func = None
     if kw.has_key('sql_dynamic_modif_func_mod_name'):
       sql_dynamic_modif_func_mod_name = kw['sql_dynamic_modif_func_mod_name']
-      exec_string = 'import %s'%sql_dynamic_modif_func_mod_name
-      exec exec_string
-    sql_dynamic_modif_func = None
     if kw.has_key('sql_dynamic_modif_func'):
-      mod_func = None
       sql_dynamic_modif_func = kw['sql_dynamic_modif_func']
-      exec_string = "mod_func = "
-      if sql_dynamic_modif_func_mod_name is not None:
-        exec_string += sql_dynamic_modif_func_mod_name+"."
-      exec_string += "%s"%sql_dynamic_modif_func
-      exec exec_string
-      sql_string = mod_func(sql_string,conn,**kw)
+    if sql_dynamic_modif_func_mod_name and sql_dynamic_modif_func:
+      DynamicSQLFuncSecurity.validateAuthorization(sql_dynamic_modif_func_mod_name, sql_dynamic_modif_func)
+      try:
+        tmp_dyn_sql_func = None
+        exec "import %s"%sql_dynamic_modif_func_mod_name
+        exec "tmp_dyn_sql_func = %s.%s"%(sql_dynamic_modif_func_mod_name,sql_dynamic_modif_func)
+        sql_string = tmp_dyn_sql_func(sql_string,conn,**kw)
+      except:
+        traceback.print_exc()
+        raise DynamicSQLFuncException()
     # Executer the SQL call
     try:
       results = conn.execute_statement( sql_string, sql_var )

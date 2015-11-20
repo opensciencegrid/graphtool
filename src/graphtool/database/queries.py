@@ -148,11 +148,11 @@ class SqlQuery( XmlConfig ):
               result_lock.release()
               sem.release()
             except Exception, e:
-              sem.release()
               error_lock.acquire()
               log.error("Error executing SQL:\n%s"%traceback.format_exc())
-              query_error.extend([e])
+              query_error.append(e)
               error_lock.release()
+              sem.release()
         for conn in agg:
           qt = QueryThread( )
           qt.conn = conn

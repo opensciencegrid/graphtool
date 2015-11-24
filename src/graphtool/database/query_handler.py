@@ -540,7 +540,7 @@ def complex_pivot_parser( sql_results, pivots="0", results="1", pivot_transform=
 def comma_separeted_pivot_arr(*pivot, **kw):
   pivot_concat = []
   
-  skip_empty_null_unkown = kw.get('exlude-empty-nulls-unkowns','YES')
+  skip_empty_null_unkown = kw.get('exclude-empty-nulls-unkowns','YES')
   skip_empty_null_unkown = skip_empty_null_unkown != 'NO'
   for piv_i in pivot:
     if skip_empty_null_unkown and (piv_i is None or str(piv_i).lower() == "unknown" or str(piv_i).strip() ==''):

@@ -71,6 +71,7 @@ graphtool.GC_COMMON = function(){
   // Load server provided keywords
   this.starttime                   = this.get_given_kw_prop('starttime');
   this.endtime                     = this.get_given_kw_prop('endtime');
+  this.span                        = this.get_given_kw_prop('span');
   if(this.starttime != null)
     this.starttime                 = graphtool.GC_COMMON.from_unix_utc_ts(this.starttime);
   if(this.endtime != null)
@@ -103,6 +104,24 @@ graphtool.GC_COMMON.hexToRgb = function(hex) {
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
   } : null;
+}
+
+graphtool.GC_COMMON.get_color_for_value = function(min_c,mid_c,max_c,min_v,mid_v,max_v,val){
+  var min = val < mid_v ? min_v:mid_v;
+  var max = val < mid_v ? mid_v:max_v;
+  var min_color = val < mid_v ? min_c:mid_c;
+  var max_color = val < mid_v ? mid_c:max_c;
+  if(val < min)
+    val = min;
+  if(val > max)
+    val = max;
+  var percentage = (val-min)/(max-min);
+  var color = {
+                r:Math.round(min_color.r+percentage*(max_color.r-min_color.r)),
+                g:Math.round(min_color.g+percentage*(max_color.g-min_color.g)),
+                b:Math.round(min_color.b+percentage*(max_color.b-min_color.b))
+               }
+  return graphtool.GC_COMMON.rgbToHex(color.r,color.g,color.b);
 }
 
 graphtool.GC_COMMON.from_unix_utc_ts = function(ts){

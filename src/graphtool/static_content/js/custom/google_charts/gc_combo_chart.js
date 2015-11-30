@@ -16,7 +16,6 @@ graphtool.GC_COMBO_CHART = function(){
   this.data_gc                   = null;
   this.selected_groups           = new Set();
   this.selected_groups_trends    = new Set();
-  this.span                      = this.get_given_kw_prop('span');
   this.column_label = this.get_json_query_metadata_prop('column_names')
   this.column_units = this.get_json_query_metadata_prop('column_units')
   this.v_axis_label = (this.column_label!=null? this.column_label:'')+(this.column_units!=null? (" ["+this.column_units+"]"):'')

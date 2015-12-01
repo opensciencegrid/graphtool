@@ -563,6 +563,13 @@ class CustomDecimalDateObjectJSONEncoder(json.JSONEncoder):
         return str(o) 
     elif isinstance(o, datetime.datetime):
         return calendar.timegm(o.timetuple())
+    elif isinstance(o, Exception):
+      default_msg = "An error has occurred while processing your request!"
+      exception_text = getattr(type(o), 'plot_desc_text', None)
+      if exception_text:
+        return exception_text
+      else:
+        return default_msg
     else:
         return "Not supported python object."
     

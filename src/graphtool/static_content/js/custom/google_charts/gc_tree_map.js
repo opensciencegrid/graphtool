@@ -111,7 +111,7 @@ graphtool.GC_TREE_MAP.prototype.set_title_and_description = function(row) {
   var value = this.row_size_color_vals.get(selection).value  
   var desc  = '<b>Total '+this.data_gc.getColumnLabel(2)+':</b> '+this.formatters.size_formatter(size)+
          ' <b>Total '+this.data_gc.getColumnLabel(3)+':</b> '+this.formatters.value_formatter(value);
-  $('#title_div').html("<h3>"+this.title+"</h3><p>"+desc+"</p>");
+  this.title_div.html("<h3>"+this.title+"</h3><p>"+desc+"</p>");
 }
 
 graphtool.GC_TREE_MAP.prototype.post_draw = function() {

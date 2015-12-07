@@ -15,10 +15,11 @@ graphtool.GC_COMBO_CHART = function(){
   this.groups_views              = [];
   this.data_gc                   = null;
   this.selected_groups           = new Set();
+  this.excluded_groups           = new Set();
   this.selected_groups_trends    = new Set();
   this.column_label = this.get_json_query_metadata_prop('column_names')
   this.column_units = this.get_json_query_metadata_prop('column_units')
-  this.v_axis_label = (this.column_label!=null? this.column_label:'')+(this.column_units!=null? (" ["+this.column_units+"]"):'')
+  this.v_axis_label = (this.column_label!=null? this.column_label:'')+(this.column_units? (" ["+this.column_units+"]"):'')
 };
 
 graphtool.GC_COMBO_CHART.prototype = graphtool.GC_COMMON.prototype;
@@ -47,7 +48,7 @@ graphtool.GC_COMBO_CHART.prototype.get_non_saveable_chart_props = function() {
   if(this.starttime && this.endtime && this.span){
     var min = new Date(), max = new Date();
     min.setTime(this.starttime.getTime()-this.span*1000/2);
-    max.setTime(this.endtime.getTime()-this.span*1000/2);
+    max.setTime(this.endtime.getTime()+this.span*1000/2);
     additional_props.hAxis.viewWindow= {
                                           min: min,
                                           max: max
@@ -163,7 +164,7 @@ graphtool.GC_COMBO_CHART.prototype.calc_draw_table = function(){
   var others_group = {};
   var obj_others_group = {};
   for(i=0;i<this.groups.getNumberOfRows();i++){
-    if(this.selected_groups.size == 0 || this.selected_groups.has(i)){
+    if(!this.excluded_groups.has(i) && (((this.selected_groups.has(-1) && this.selected_groups.size ==1)? this.selected_groups.size != 0:this.selected_groups.size == 0) || this.selected_groups.has(i))){
       var view_i = this.groups_views[i];
       if(added==0){
         this.data_gc = view_i.toDataTable();
@@ -192,43 +193,81 @@ graphtool.GC_COMBO_CHART.prototype.calc_draw_table = function(){
       }
     }
   }
-  // Joins the grouped data of "OTHERS"
-  if( Object.keys(others_group).length > 0){
-    var data_others = new google.visualization.DataTable();
-    data_others.addColumn('datetime');
-    data_others.addColumn('number');
-    for(key in others_group){
-      data_others.addRow([obj_others_group[key],others_group[key]]);
-    }
-    this.data_gc = google.visualization.data.join(this.data_gc, data_others, 'full', [[0,0]],cols,[1]);
-    for(k = 0; k < this.data_gc.getNumberOfRows() ; k++){
-      this.data_gc.setCell(k, added, graphtool.GC_COMMON.sum_with_default_nulls(this.data_gc.getValue(k,added),this.data_gc.getValue(k,added+1),0))
-    }
-    this.data_gc.removeColumns(added+1,1);
+  if(added == 0){
+    this.chart_div.hide();
+    this.legend_div.hide();
+    this.title_div.html("<h3>No groups to display.</h3>");
+    $('html,body').animate({scrollTop: this.title_div.offset().top},'slow');
   }
-  
-  // Sets the column labels according to the selected groups and include the trendlines
-  this.data_gc.setColumnLabel(0, "time")
-  var current=1
-  this.chart_properties.trendlines = {}
-  for(i=0;i<this.groups.getNumberOfRows();i++){
-    if(this.selected_groups.size == 0 || this.selected_groups.has(i)){
-      if(current >= this.group_after){
-        this.data_gc.setColumnLabel(current, "OTHERS ("+total_grouped+")")
-        break;
+  else{
+    this.title_div.html("");
+    this.chart_div.show();
+    this.legend_div.show();
+    // Joins the grouped data of "OTHERS"
+    if( Object.keys(others_group).length > 0){
+      var data_others = new google.visualization.DataTable();
+      data_others.addColumn('datetime');
+      data_others.addColumn('number');
+      for(key in others_group){
+        data_others.addRow([obj_others_group[key],others_group[key]]);
       }
-      this.data_gc.setColumnLabel(current, this.groups.getValue(i, 0))
-      if(this.selected_groups_trends.has(i))
-        this.chart_properties.trendlines[current-1] = {visibleInLegend: true}
-      current++;
+      this.data_gc = google.visualization.data.join(this.data_gc, data_others, 'full', [[0,0]],cols,[1]);
+      for(k = 0; k < this.data_gc.getNumberOfRows() ; k++){
+        this.data_gc.setCell(k, added, graphtool.GC_COMMON.sum_with_default_nulls(this.data_gc.getValue(k,added),this.data_gc.getValue(k,added+1),0))
+      }
+      this.data_gc.removeColumns(added+1,1);
+    }
+    
+    // Sets the column labels according to the selected groups and include the trendlines
+    this.data_gc.setColumnLabel(0, "time")
+    var current=1
+    this.chart_properties.trendlines = {}
+    for(i=0;i<this.groups.getNumberOfRows();i++){
+      if(!this.excluded_groups.has(i) && (((this.selected_groups.has(-1) && this.selected_groups.size ==1)? this.selected_groups.size != 0:this.selected_groups.size == 0) || this.selected_groups.has(i))){
+        if(current >= this.group_after){
+          this.data_gc.setColumnLabel(current, "OTHERS ("+total_grouped+")")
+          if(this.selected_groups_trends.has(-1)&&!this.excluded_groups.has(-1))
+            this.chart_properties.trendlines[this.left2right? (current-1):(added-current)] = {visibleInLegend: true}
+          break;
+        }
+        this.data_gc.setColumnLabel(current, this.groups.getValue(i, 0))
+        if(this.selected_groups_trends.has(i))
+          this.chart_properties.trendlines[this.left2right? (current-1):(added-current)] = {visibleInLegend: true}
+        current++;
+      }
+    }
+    // The OTHERS group is calculated based on the selection/exclusion and the group after parameter
+    // Therefore after it is computed the logic to include/exclude it will take effect
+    try{
+      if(this.data_gc.getNumberOfColumns()>=this.group_after){
+        if(this.excluded_groups.has(-1)){
+          this.data_gc.removeColumn(this.group_after);
+        }
+        if(this.selected_groups.has(-1)){
+          for(i=this.group_after-1; i > 0 ; i--)
+            this.data_gc.removeColumn(i);
+        }
+        
+      }
+    }  
+    catch(err) {
+      console.log(err.stack)
+    }
+    if(this.data_gc.getNumberOfColumns() <= 1){
+      this.chart_div.hide();
+      this.legend_div.hide();
+      this.title_div.html("<h3>No groups to display.</h3>");
+      $('html,body').animate({scrollTop: this.title_div.offset().top},'slow');
+    }
+    else{
+      // Applies additional Transformations
+      this.data_gc.sort([{column: 0}])
+      this.cumulate();
+      this.right_2_left();
+      this.include_borders();
+      this.format_combo();
     }
   }
-  // Applies additional Transformations
-  this.data_gc.sort([{column: 0}])
-  this.cumulate();
-  this.right_2_left();
-  this.include_borders();
-  this.format_combo();
 }
 
 graphtool.GC_COMBO_CHART.prototype.get_legend_labels_and_values = function(){
@@ -252,72 +291,98 @@ graphtool.GC_COMBO_CHART.prototype.get_legend_labels_and_values = function(){
 // UI functions 
 //-------------------------------------------------------------------
 
-graphtool.GC_COMBO_CHART.prototype.include_groups_selection_options = function(){
-  var html_code = 
-  '<div>'+
-  '  <b>Selected Groups</b>'+
-  '  <select data-placeholder="Choose a group" id="group_select_list" multiple>';
+graphtool.GC_COMBO_CHART.prototype.get_html_group_selection_items = function(){
+  var html_code = '';
   for(var i = 0 ; i < this.groups.getNumberOfRows(); i++)
     html_code += '<option value="'+i+'">'+this.groups.getValue(i,0)+'</option>';
+  html_code += '<option value="'+(-1)+'">OTHERS</option>';
+  return html_code;
+}
+
+graphtool.GC_COMBO_CHART.prototype.draw_select_exclude_and_trendlines = function(){
+  var g_select   = $("#group_select_list" ).val();
+  var g_exclude  = $("#group_exclude_list" ).val();
+  var g_trend    = $("#trend_select_list" ).val();
+  this.selected_groups.clear();
+  this.excluded_groups.clear();
+  this.selected_groups_trends.clear();
+  for(i in g_select)
+    this.selected_groups.add(parseInt(g_select[i]));
+  for(i in g_exclude)
+    this.excluded_groups.add(parseInt(g_exclude[i]));
+  for(i in g_trend)
+    this.selected_groups_trends.add(parseInt(g_trend[i]));
+  this.drawChart();
+}
+
+graphtool.GC_COMBO_CHART.prototype.include_groups_selection_options = function(){
+  var html_code = 
+  '<div><table>'+
+  '  <tr>'+
+  '    <td>'+
+  '      <b>Select Groups:</b>'+
+  '    </td>'+
+  '    <td>'+
+  '      <select data-placeholder="Choose a group" style="width:350px;" id="group_select_list" multiple>';
+  html_code += this.get_html_group_selection_items();
   html_code +=
-  '  </select>'+
-  '  <button id="clear-group-select">Clear Selection</button>'+
-  '  <button id="rerender-by-group-select">Draw Plot</button>'+
-  '</div>';
+  '      </select>'+
+  '    </td>'+
+  '    <td>'+
+  '      <button id="clear-group-select">Clear Selection</button>'+
+  '    </td>'+
+  '  </tr>'+
+  '  <tr>'+
+  '    <td>'+
+  '      <b>Exclude Groups:</b>'+
+  '    </td>'+
+  '    <td>'+
+  '      <select data-placeholder="Choose a group" style="width:350px;" id="group_exclude_list" multiple>';
+  html_code += this.get_html_group_selection_items();
+  html_code +=
+  '      </select>'+
+  '    </td>'+
+  '    <td>'+
+  '      <button id="clear-group-exclude">Clear Selection</button><br/>'+
+  '    </td>'+
+  '  </tr>'+
+  '  <tr>'+
+  '    <td>'+
+  '      <b>Select Trendlines:</b>'+
+  '    </td>'+
+  '    <td>'+
+  '      <select data-placeholder="Choose a group" style="width:350px;" id="trend_select_list" multiple>';
+  html_code += this.get_html_group_selection_items();
+  html_code +=
+  '      </select>'+
+  '    </td>'+
+  '    <td>'+
+  '      <button id="clear-trend-select">Clear Selection</button>'+
+  '    </td>'+
+  '  </tr>'+
+  '</table></div>';
   this.include_options_tab("groups_selection","Group Selection",html_code);
-  $("#group_select_list" ).chosen(); 
+  $("#group_select_list,#group_exclude_list,#trend_select_list").chosen().change(this.draw_select_exclude_and_trendlines.bind(this));
   $("#clear-group-select")
     .button()
     .click(function( event ) {
       $("#group_select_list").val('');
       $("#group_select_list").trigger("chosen:updated");
+      this.draw_select_exclude_and_trendlines();
     }.bind(this));
-  $("#rerender-by-group-select")
+  $("#clear-group-exclude")
     .button()
     .click(function( event ) {
-      var g_select = $("#group_select_list" ).val()
-      this.selected_groups.clear();
-      for(i in g_select)
-        this.selected_groups.add(parseInt(g_select[i]));
-      this.drawChart();
+      $("#group_exclude_list").val('');
+      $("#group_exclude_list").trigger("chosen:updated");
+      this.draw_select_exclude_and_trendlines();
     }.bind(this));
-}
-
-graphtool.GC_COMBO_CHART.prototype.include_trendlines_options = function(){
-  var html_code = 
-  '<div>'+
-  '  <b>Selected Trendlines</b>'+
-  '  <select data-placeholder="Choose a group" id="trend_select_list" multiple>';
-  for(var i = 0 ; i < this.groups.getNumberOfRows(); i++)
-    html_code += '<option value="'+i+'">'+this.groups.getValue(i,0)+'</option>';
-  html_code +=
-  '  </select>'+
-  '  <button id="clear-trend-select">Clear Selection</button>'+
-  '  <button id="rerender-by-trend-select">Draw Plot</button>'+
-  '</div>';
-  this.include_options_tab("trends_selection","Trendlines",html_code);
-  $("#trend_select_list" ).chosen(); 
   $("#clear-trend-select")
     .button()
     .click(function( event ) {
       $("#trend_select_list").val('');
       $("#trend_select_list").trigger("chosen:updated");
-    }.bind(this));
-  $("#rerender-by-trend-select")
-    .button()
-    .click(function( event ) {
-      var g_select = $("#trend_select_list" ).val()
-      this.selected_groups_trends.clear();
-      for(i in g_select){
-        this.selected_groups.add(parseInt(g_select[i]));
-        this.selected_groups_trends.add(parseInt(g_select[i]));
-      }
-      var arr = []
-      for(select_i in this.selected_groups)
-        arr.push(select_i)
-      $("#group_select_list" ).val(arr);
-      $("#group_select_list").trigger("chosen:updated");
-      this.drawChart();
+      this.draw_select_exclude_and_trendlines();
     }.bind(this));
 }
 
@@ -400,7 +465,6 @@ graphtool.GC_COMBO_CHART.prototype.get_object_type = function() {
 graphtool.GC_COMBO_CHART.prototype.load_chart_options = function() {
   this.load_default_options_tabs();
   this.include_groups_selection_options();
-  this.include_trendlines_options();
   this.include_options_tab("combo_options_on_off","On/Off Options","");  
   this.include_stack_options();
   this.include_cumulate_options();

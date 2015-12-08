@@ -90,6 +90,7 @@ src/graphtool/static_content/js/custom/google_charts/__init__.pyc
 src/graphtool/static_content/js/custom/google_charts/gc_combo_chart.js
 src/graphtool/static_content/js/custom/google_charts/gc_common.js
 src/graphtool/static_content/js/custom/google_charts/gc_pie_chart.js
+src/graphtool/static_content/js/custom/google_charts/gc_quality_map_chart.js
 src/graphtool/static_content/js/custom/google_charts/gc_tree_map.js
 src/graphtool/static_content/js/jquery/__init__.py
 src/graphtool/static_content/js/jquery/__init__.pyc

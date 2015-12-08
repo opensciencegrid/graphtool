@@ -62,7 +62,7 @@
     inp_tag.click(function(){
         inp_tag.autocomplete( "search", "" );
     });
-  }  
+  }
   function setOpportunisticFilterPicker(inp_id){
     var inp_tag = $('#'+inp_id);
     var autocomplete_vals = [
@@ -90,8 +90,37 @@
         inp_tag.autocomplete( "search", "" );
     });
   }
+  function setHEPSpotOnDemandFilter(inp_id){
+    var inp_tag = $('#'+inp_id);
+    var autocomplete_vals = [
+                              {
+                                label:"Include All",
+                                value: 'both'
+                              },
+                              {
+                                label:"Only Spot Price",
+                                value:'spot'
+                              },
+                              {
+                                label:"Only On Demand",
+                                value:'on-demand'
+                              }
+                             ];
+    inp_tag.autocomplete({
+      minLength: 0,
+      source: autocomplete_vals
+    });
+    inp_tag.focus(function(){
+        inp_tag.autocomplete( "search", "" );
+    });
+    inp_tag.click(function(){
+        inp_tag.autocomplete( "search", "" );
+    });
+  }
   setDateTimePicker('starttime');
   setDateTimePicker('endtime');
   setSpanPicker('span');
-  setYesNoPicker('exlude-empty-nulls-unkowns')
+  setYesNoPicker('exclude-empty-nulls-unkowns');
+  setYesNoPicker('exclude-stopped');
   setOpportunisticFilterPicker('opportunistic-filter');
+  setHEPSpotOnDemandFilter('charge-type');

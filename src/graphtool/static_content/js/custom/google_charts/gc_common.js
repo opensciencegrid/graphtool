@@ -69,8 +69,11 @@ graphtool.GC_COMMON = function(){
     load_server_data(this);
   
   // Load server provided keywords
+  this.server_error                = this.get_json_query_metadata_prop('error');
+  
   this.starttime                   = this.get_given_kw_prop('starttime');
   this.endtime                     = this.get_given_kw_prop('endtime');
+  this.span                        = this.get_given_kw_prop('span');
   if(this.starttime != null)
     this.starttime                 = graphtool.GC_COMMON.from_unix_utc_ts(this.starttime);
   if(this.endtime != null)
@@ -105,8 +108,28 @@ graphtool.GC_COMMON.hexToRgb = function(hex) {
   } : null;
 }
 
+graphtool.GC_COMMON.get_color_for_value = function(min_c,mid_c,max_c,min_v,mid_v,max_v,val){
+  var min = val < mid_v ? min_v:mid_v;
+  var max = val < mid_v ? mid_v:max_v;
+  var min_color = val < mid_v ? min_c:mid_c;
+  var max_color = val < mid_v ? mid_c:max_c;
+  if(val < min)
+    val = min;
+  if(val > max)
+    val = max;
+  var percentage = (val-min)/(max-min);
+  var color = {
+                r:Math.round(min_color.r+percentage*(max_color.r-min_color.r)),
+                g:Math.round(min_color.g+percentage*(max_color.g-min_color.g)),
+                b:Math.round(min_color.b+percentage*(max_color.b-min_color.b))
+               }
+  return graphtool.GC_COMMON.rgbToHex(color.r,color.g,color.b);
+}
+
 graphtool.GC_COMMON.from_unix_utc_ts = function(ts){
-  var temp_date = new Date();
+  // Daylight Savings
+  // Should initialize the date with the timestamp to obtain the offset of that specific time
+  var temp_date = new Date(ts*1000);
   temp_date.setTime(ts*1000+temp_date.getTimezoneOffset()*60*1000);
   return temp_date;
 }
@@ -243,7 +266,19 @@ graphtool.GC_COMMON.prototype.data_initial_setup = function() {
 }
 
 graphtool.GC_COMMON.prototype.load_google_api_and_draw = function() {
-  google.load("visualization", "1", {packages:["table"].concat(this.get_required_google_pkgs()), callback: this.load_google_callback.bind(this)});
+  if(this.server_error){
+    this.chart_div.html("<h3 style='color:red;'>"+this.server_error+"</h3>");
+    this.chart_div.css('width','')
+    this.chart_div.css('height','');
+  }
+  else if(!this.data || this.data.length < 2){
+    this.chart_div.html("<h3>No data returned by DB query.</h3>");
+    this.chart_div.css('width','')
+    this.chart_div.css('height','');
+  }
+  else{
+    google.load("visualization", "1", {packages:["table"].concat(this.get_required_google_pkgs()), callback: this.load_google_callback.bind(this)});
+  }
 }
 
 //Must be implemented in the cubclasses and will be invoked after the chart is initialized

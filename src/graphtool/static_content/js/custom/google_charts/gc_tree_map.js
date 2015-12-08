@@ -51,24 +51,6 @@ graphtool.GC_TREE_MAP.prototype.rollup = function(e){
   }
 }
 
-graphtool.GC_TREE_MAP.prototype.get_color_for_value = function(min_c,mid_c,max_c,val){
-  var min = val < this.mid_val ? this.min_val:this.mid_val;
-  var max = val < this.mid_val ? this.mid_val:this.max_val;
-  var min_color = val < this.mid_val ? min_c:mid_c;
-  var max_color = val < this.mid_val ? mid_c:max_c;
-  if(val < min)
-    val = min;
-  if(val > max)
-    val = max;
-  var percentage = (val-min)/(max-min);
-  var color = {
-                r:Math.round(min_color.r+percentage*(max_color.r-min_color.r)),
-                g:Math.round(min_color.g+percentage*(max_color.g-min_color.g)),
-                b:Math.round(min_color.b+percentage*(max_color.b-min_color.b))
-               }
-  return graphtool.GC_COMMON.rgbToHex(color.r,color.g,color.b);
-}
-
 graphtool.GC_TREE_MAP.prototype.get_colors = function(values){
   this.min_val     = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:this.min_val;
   this.max_val     = (typeof this.chart_properties.maxColorValue !== 'undefined')? this.chart_properties.maxColorValue:this.max_val;
@@ -78,7 +60,7 @@ graphtool.GC_TREE_MAP.prototype.get_colors = function(values){
   var max_rgb      = graphtool.GC_COMMON.hexToRgb(this.max_color);
   var vals_colors  = [];
   for(index in values)
-    vals_colors.push(this.get_color_for_value(min_rgb,mid_rgb,max_rgb,values[index]));
+    vals_colors.push(graphtool.GC_COMMON.get_color_for_value(min_rgb,mid_rgb,max_rgb,this.min_val,this.mid_val,this.max_val,values[index]));
   return vals_colors;
 }
 
@@ -129,7 +111,7 @@ graphtool.GC_TREE_MAP.prototype.set_title_and_description = function(row) {
   var value = this.row_size_color_vals.get(selection).value  
   var desc  = '<b>Total '+this.data_gc.getColumnLabel(2)+':</b> '+this.formatters.size_formatter(size)+
          ' <b>Total '+this.data_gc.getColumnLabel(3)+':</b> '+this.formatters.value_formatter(value);
-  $('#title_div').html("<h3>"+this.title+"</h3><p>"+desc+"</p>");
+  this.title_div.html("<h3>"+this.title+"</h3><p>"+desc+"</p>");
 }
 
 graphtool.GC_TREE_MAP.prototype.post_draw = function() {

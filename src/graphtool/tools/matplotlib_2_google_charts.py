@@ -1,4 +1,4 @@
-
+translate_to_gc = False
 mpl_2_gc = {
             'GratiaStackedBar':   {
                                     'gc_type':'gc_combo_chart',
@@ -53,6 +53,16 @@ mpl_2_gc = {
                                           gc_obj.chart_formatters = {};
                                           gc_obj.cumulative = true;
                                           """
+                                    },
+            'QualityMap':           {
+                                      'gc_type':'gc_quality_map_chart',
+                                      'gc_js_setup':
+                                          """
+                                          gc_obj.chart_properties = {};
+                                          gc_obj.chart_formatters = {};
+                                          """
                                     }
             }
 
+if not translate_to_gc:
+  mpl_2_gc = {}

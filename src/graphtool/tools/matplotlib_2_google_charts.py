@@ -1,4 +1,4 @@
-translate_to_gc = False
+translate_to_gc = True
 mpl_2_gc = {
             'GratiaStackedBar':   {
                                     'gc_type':'gc_combo_chart',

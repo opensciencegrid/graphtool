@@ -3,7 +3,6 @@ from graphtool.database.query_handler import QueryHandler
 from graphtool.tools.common import expand_string, to_timestamp
 from xml.sax.saxutils import XMLGenerator
 import types, cStringIO, datetime, traceback, sys
-from matplotlib_2_google_charts import mpl_2_gc
 import json
 from graphtool.database.query_handler import CustomDecimalDateObjectJSONEncoder
 
@@ -138,6 +137,7 @@ class XmlGenerator( QueryHandler ):
     graph_type = metadata.get('graph_type',False)
     graph_kind = metadata.get('graph_kind',False)
     js_chart_setup = metadata.get('js_chart_setup',False)
+    mpl_2_gc = {}
     
     metadata['translate_mp_2_gc'] = False
     if not graph_kind and mpl_2_gc.has_key(graph_type):

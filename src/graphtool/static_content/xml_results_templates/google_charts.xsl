@@ -55,7 +55,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       </td>
     </tr>
   </table>
-  <div id="options_accordion_wrapper">
+  <div id="gc_options_accordion_wrapper">
     
   </div>
   

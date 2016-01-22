@@ -17,7 +17,13 @@ from graphtool.tools.common import expand_string, to_timestamp, \
     convert_to_datetime
 
 class CsvGenerator(QueryHandler):
-
+    def __init__( self, *args, **kw ):
+        super( CsvGenerator, self ).__init__( *args, **kw )
+        for query in self.objs:
+            query.metadata['csv_generator'] = self
+        for query in self.known_commands.values():
+            query.metadata['csv_generator'] = self
+        
     def handle_results( self, results, metadata, **kw ):
         output = cStringIO.StringIO()
         kind = metadata.get('kind','Type not specified!')

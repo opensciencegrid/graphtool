@@ -570,6 +570,8 @@ class CustomDecimalDateObjectJSONEncoder(json.JSONEncoder):
         return exception_text
       else:
         return default_msg
+    elif isinstance(o, types.FunctionType):
+      return o.__dict__
     else:
         return "Not supported python object."
     

@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     
@@ -5,14 +6,10 @@
     <title>${tmpl_data.html_title}</title>
     
     <!-- Stylesheets loading -->
-    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/style.css">
-    </link>
-    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/jquery-ui.min.css">
-    </link>
-    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/jquery.datetimepicker.css">
-    </link>
-    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/ext/choosen/chosen.min.css">
-    </link>
+    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/html_style.css"/>
+    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/jquery-ui.min.css"/>
+    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/jquery.datetimepicker.css"/>
+    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/ext/choosen/chosen.min.css"/>
     
     <!-- Javascript files loading -->
     <script type="text/javascript" src="${tmpl_data.static_base_url}/js/jquery/jquery-1.11.2.min.js">

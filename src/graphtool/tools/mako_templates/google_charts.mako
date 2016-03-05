@@ -1,16 +1,16 @@
       <!-- Google Charts Panel -->
       % if tmpl_data.gc_script is not None:
-        <div id="gc_panel_div">
-          <div id="full_chart_div">
-            <div id="gc_title_div">
+        <article id="gooole_chart">
+          <div id="gc_full_chart_div" class="white_bg" style="display: inline-block;">
+            <div id="gc_title_div" class="white_bg">
             </div>
-            <div id="gc_chart_div" style="width: 700px; height: 500px;">
+            <div id="gc_chart_div" class="white_bg" style="width: 700px; height: 500px;">
               <h1>${tmpl_data.html_title| h} loading . . .</h1>
             </div>
-            <div id="gc_legend_div">
-              <table id="gc_legend_table" border="0">
+            <div id="gc_legend_div" class="white_bg">
+              <table id="gc_legend_table" class="white_bg" border="0">
               </table>
-              <div id="gc_legend_footer_div">
+              <div id="gc_legend_footer_div" class="white_bg">
               </div>
             </div>
           </div>
@@ -18,7 +18,9 @@
           </div>
           <div id="gc_options_accordion_wrapper">
           </div>
-        </div>
+          <hr/>
+        </article>
+        <br/>
         
         <!-- ADDITIONAL JS -->
         <script type="text/javascript" src="${tmpl_data.static_base_url}/js/other/html2canvas.js">
@@ -28,6 +30,8 @@
         <script type="text/javascript" src="${tmpl_data.static_base_url}/js/other/canvas-toBlob.js">
         </script>
         <script type="text/javascript" src="${tmpl_data.static_base_url}/js/other/FileSaver.min.js">
+        </script>
+        <script type="text/javascript" src="${tmpl_data.static_base_url}/js/custom/graphtool_common.js">
         </script>
         
         <!-- JAVASCRIPT -->

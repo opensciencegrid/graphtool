@@ -16,8 +16,8 @@ graphtool.GC_TREE_MAP = function(){
 
   // Variables that are required for legend
   this.parent_row          = [-1];
-  this.child_row           = new Map();
-  this.row_size_color_vals = new Map();
+  this.child_row           = new graphtool.JS_MAP();
+  this.row_size_color_vals = new graphtool.JS_MAP();
   this.display_row         = 0;
   this.min_val             = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:null;
   this.max_val             = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:null;
@@ -329,8 +329,8 @@ graphtool.GC_TREE_MAP.prototype.table_group_to_table_tree = function (data_var,l
 graphtool.GC_COMMON.prototype.calc_draw_table = function(){
   // Resets variables that are required for legend
   this.parent_row          = [-1];
-  this.child_row           = new Map();
-  this.row_size_color_vals = new Map();
+  this.child_row           = new graphtool.JS_MAP();
+  this.row_size_color_vals = new graphtool.JS_MAP();
   this.display_row         = 0;
   this.min_val             = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:null;
   this.max_val             = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:null;
@@ -369,7 +369,7 @@ graphtool.GC_TREE_MAP.prototype.include_level_order_options = function(){
     '  <b>Active Levels</b>'+
     '  <div id="sortable_active" class="active-inactive-connected-sortable">';
   var order = [];
-  var exclude = new Set();
+  var exclude = new graphtool.JS_SET();
   if(this.levels_order)
     order = this.levels_order;
   if(order && order.length > 0){

@@ -68,7 +68,7 @@ graphtool.GC_QUALITY_MAP.prototype.data_initial_setup = function() {
   this.data_gc.addColumn({ type: 'date',   id: 'End' });
 
   this.color_list = []
-  this.vals_set   = new Set()
+  this.vals_set   = new graphtool.JS_SET();
   
   for(var i = 0 ; i < this.gc_init_table.getNumberOfRows() ; i++){
     var group        = this.gc_init_table.getValue(i,0);

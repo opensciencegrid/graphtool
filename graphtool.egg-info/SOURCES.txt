@@ -73,6 +73,7 @@ src/graphtool/static_content/CMSbwl3.png
 src/graphtool/static_content/__init__.py
 src/graphtool/static_content/__init__.pyc
 src/graphtool/static_content/calbtn.gif
+src/graphtool/static_content/html_style.css
 src/graphtool/static_content/style.css
 src/graphtool/static_content/web_layout.xsl
 src/graphtool/static_content/web_viewer.xsl
@@ -83,6 +84,7 @@ src/graphtool/static_content/js/__init__.py
 src/graphtool/static_content/js/__init__.pyc
 src/graphtool/static_content/js/custom/__init__.py
 src/graphtool/static_content/js/custom/__init__.pyc
+src/graphtool/static_content/js/custom/graphtool_common.js
 src/graphtool/static_content/js/custom/show_hide_mp_old_image.js
 src/graphtool/static_content/js/custom/xml_results_query_filters.js
 src/graphtool/static_content/js/custom/google_charts/__init__.py
@@ -92,6 +94,7 @@ src/graphtool/static_content/js/custom/google_charts/gc_common.js
 src/graphtool/static_content/js/custom/google_charts/gc_pie_chart.js
 src/graphtool/static_content/js/custom/google_charts/gc_quality_map_chart.js
 src/graphtool/static_content/js/custom/google_charts/gc_tree_map.js
+src/graphtool/static_content/js/custom/google_charts/style.css
 src/graphtool/static_content/js/jquery/__init__.py
 src/graphtool/static_content/js/jquery/__init__.pyc
 src/graphtool/static_content/js/jquery/jquery-1.11.2.min.js
@@ -175,12 +178,22 @@ src/graphtool/tools/common.py
 src/graphtool/tools/common.pyc
 src/graphtool/tools/csv_output.py
 src/graphtool/tools/csv_output.pyc
+src/graphtool/tools/html_output.py
+src/graphtool/tools/html_output.pyc
 src/graphtool/tools/keepalive.py
 src/graphtool/tools/matplotlib_2_google_charts.py
 src/graphtool/tools/matplotlib_2_google_charts.pyc
 src/graphtool/tools/query_output.py
 src/graphtool/tools/query_output.pyc
 src/graphtool/tools/treemap.py
+src/graphtool/tools/mako_templates/__init__.py
+src/graphtool/tools/mako_templates/footer.mako
+src/graphtool/tools/mako_templates/google_charts.mako
+src/graphtool/tools/mako_templates/header.mako
+src/graphtool/tools/mako_templates/index.mako
+src/graphtool/tools/mako_templates/query.mako
+src/graphtool/tools/mako_templates/query_list.mako
+src/graphtool/tools/mako_templates/query_matplotlib_img_dialog.mako
 src/graphtool/utilities/__init__.py
 src/graphtool/utilities/graphtool_cli.py
 src/graphtool/web/__init__.py

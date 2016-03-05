@@ -1,3 +1,5 @@
+if(typeof graphtool === "undefined" || graphtool === null)
+  var graphtool = {};
 
 graphtool.GC_COMBO_CHART = function(){
   graphtool.GC_COMMON.call(this)
@@ -14,9 +16,9 @@ graphtool.GC_COMBO_CHART = function(){
   this.groups                    = null;
   this.groups_views              = [];
   this.data_gc                   = null;
-  this.selected_groups           = new Set();
-  this.excluded_groups           = new Set();
-  this.selected_groups_trends    = new Set();
+  this.selected_groups           = new graphtool.JS_SET();
+  this.excluded_groups           = new graphtool.JS_SET();
+  this.selected_groups_trends    = new graphtool.JS_SET();
   this.column_label = this.get_json_query_metadata_prop('column_names')
   this.column_units = this.get_json_query_metadata_prop('column_units')
   this.v_axis_label = (this.column_label!=null? this.column_label:'')+(this.column_units? (" ["+this.column_units+"]"):'')
@@ -273,14 +275,45 @@ graphtool.GC_COMBO_CHART.prototype.calc_draw_table = function(){
 graphtool.GC_COMBO_CHART.prototype.get_legend_labels_and_values = function(){
   var labels = [];
   var values = [];
+  var max=0,min=Number.MAX_VALUE,avg=0,current=0;
   // The first column is the x-axis data
   for(var j = 1 ; j < this.data_gc.getNumberOfColumns() ; j++){
     labels.push(this.data_gc.getColumnLabel(j));
     values.push(0);
-    for(var i = 0 ; i < this.data_gc.getNumberOfRows() ; i++){
-      values[j-1] += this.data_gc.getValue(i,j) == null? 0:this.data_gc.getValue(i,j)
+    if(this.cumulative){
+      values[j-1] = this.data_gc.getValue(this.data_gc.getNumberOfRows()-1,j)
+    }
+    else{
+      for(var i = 0 ; i < this.data_gc.getNumberOfRows() ; i++){
+        values[j-1] += this.data_gc.getValue(i,j) == null? 0:this.data_gc.getValue(i,j)
+      }
     }
   }
+  // Group data by date
+  var previous_acum = 0
+  for(var i = 0 ; i < this.data_gc.getNumberOfRows() ; i++){
+    current = 0;
+    for(var j = 1 ; j < this.data_gc.getNumberOfColumns() ; j++){
+      current += this.data_gc.getValue(i,j) == null? 0:this.data_gc.getValue(i,j)
+    }
+    if(this.cumulative)
+      current -= previous_acum;
+    if(max<current)
+      max = current;
+    if(min>current)
+      min = current;
+    avg+= current;
+    previous_acum += current;
+  }
+  avg/=this.data_gc.getNumberOfRows();
+  max = this.two_decimal_formatter.formatValue(max);
+  min = this.two_decimal_formatter.formatValue(min);
+  avg = this.two_decimal_formatter.formatValue(avg);
+  current = this.two_decimal_formatter.formatValue(current);
+  var footer_html = "<center><b>Maximum:</b> "+max+", <b>Minimum:</b> "+min+", <b>Average:</b> "+avg+", <b>Current:</b> "+current+"</center>";
+  this.footer_div.html("");
+  this.footer_div.append(footer_html);
+  
   for(i in values){
     values[i] = this.no_decimal_formatter.formatValue(values[i])
   }

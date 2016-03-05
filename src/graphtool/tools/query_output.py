@@ -5,6 +5,7 @@ from xml.sax.saxutils import XMLGenerator
 import types, cStringIO, datetime, traceback, sys
 import json
 from graphtool.database.query_handler import CustomDecimalDateObjectJSONEncoder
+from graphtool.tools.matplotlib_2_google_charts import mpl_2_gc
 
 
 # See if we can use the multiprocessing module in order to offload the CPU
@@ -121,7 +122,10 @@ class XmlGenerator( QueryHandler ):
     return gen
 
   def startPlot( self, output, results, metadata, encoding='UTF-8' ):
-    title = expand_string( metadata.get('title',''), metadata.get('sql_vars','') )
+    title = metadata.get('title','')
+    if metadata.get('given_kw',{}).has_key('title'):
+      title = metadata.get('given_kw',{})['title']
+    title = expand_string(title, metadata.get('sql_vars','') )
     gen = self.startDocument( output,("Results of Query: %s"%title), encoding )
     query_attrs = {}
     name = metadata.get('name','')
@@ -137,7 +141,6 @@ class XmlGenerator( QueryHandler ):
     graph_type = metadata.get('graph_type',False)
     graph_kind = metadata.get('graph_kind',False)
     js_chart_setup = metadata.get('js_chart_setup',False)
-    mpl_2_gc = {}
     
     metadata['translate_mp_2_gc'] = False
     if not graph_kind and mpl_2_gc.has_key(graph_type):
@@ -389,8 +392,11 @@ class XmlGenerator( QueryHandler ):
     #if attrs['pivot'] == 'Link':
     #  return 'link', {'from':pivot[0],'to':pivot[1]}
     #else:
-      if metadata.get('translate_mp_2_gc',False):
-        return 'pivot',{'name':json.dumps(pivot,separators=(',',':'), cls=CustomDecimalDateObjectJSONEncoder)}
+      if metadata.get('translate_mp_2_gc',False) or metadata.get('graph_kind',False) == 'google_charts':
+        json_encode = json.dumps(pivot,separators=(',',':'), cls=CustomDecimalDateObjectJSONEncoder)
+        if json_encode.find('[') == 0:
+          json_encode = json_encode[1:-1]
+        return 'pivot',{'name':json_encode}
       return 'pivot',{'name':str(pivot)}
 
   def addData( self, data, gen, metadata, coords=None, **kw ):

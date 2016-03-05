@@ -574,9 +574,7 @@ class CustomDecimalDateObjectJSONEncoder(json.JSONEncoder):
       return o.__dict__
     else:
         return "Not supported python object."
-    
-
-
 
 def json_pivot_arr(*pivot, **kw):
-  return json.dumps(pivot,separators=(',',':'),indent=None, cls=CustomDecimalDateObjectJSONEncoder)[1:-1]
+  return tuple(pivot)
+  #return json.dumps(pivot,separators=(',',':'),indent=None, cls=CustomDecimalDateObjectJSONEncoder)[1:-1]

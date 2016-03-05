@@ -1,5 +1,6 @@
-var graphtool = {};
-
+if(typeof graphtool === "undefined" || graphtool === null)
+  var graphtool = {};
+  
 graphtool.GC_COMMON = function(){
   //-------------------------------------------------------------------
   // Common Variables
@@ -59,8 +60,8 @@ graphtool.GC_COMMON = function(){
   this.legend_table                = $("#gc_legend_table");
   this.footer_div                  = $("#gc_legend_footer_div");
   this.table_div                   = $('#gc_table_div');
-  this.chart_div_options           = null;// $("#chart_div_options"); Starts as null and gets assigned later
-  this.chart_div_options_accordion = null;// $("#chart_div_options_accordion"); Starts as null and gets assigned later
+  this.chart_div_options           = null;// $("#gc_chart_div_options"); Starts as null and gets assigned later
+  this.chart_div_options_accordion = null;// $("#gc_chart_div_options_accordion"); Starts as null and gets assigned later
   this.chart_div_options_loaded    = false;
   
   if(typeof js_chart_setup !== "undefined" && js_chart_setup instanceof Function)
@@ -459,16 +460,14 @@ graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(column_types)
   var i,j;
   var temp_date;
   for(var i = 0 ; i < this.data.length ; i++){
-  
     var pivot_n_results = [];
-    for(var k_index in data[i]){
-      var cell = data[i][k_index]
-      console.log(cell)
+    for(var k_index in this.data[i]){
+      var cell = this.data[i][k_index]
       if(cell instanceof Array)
-        pivot_n_results.concat(cell);
+        for(var n_index in cell)
+          pivot_n_results.push(cell[n_index]);
       else
-        pivot_n_results.push(cell)
-      console.log(pivot_n_results)
+        pivot_n_results.push(cell);
     }
     if(i == 0){
       for(j=0;j<pivot_n_results.length;j++){
@@ -510,12 +509,12 @@ graphtool.GC_COMMON.prototype.setup_options_menu = function(force_reload){
     this.chart_div_options_loaded = false;
   }
   if(!this.chart_div_options_loaded){
-    $("#gc_options_accordion_wrapper").html('<div id="chart_div_options_accordion">'+
+    $("#gc_options_accordion_wrapper").html('<div id="gc_chart_div_options_accordion">'+
                                             '<h3>Chart &amp; Export Options:</h3>'+
-                                            '<div id="chart_div_options_accordion_inner_panel" style="overflow:visible">'+
+                                            '<div id="gc_chart_div_options_accordion_inner_panel" style="overflow:visible">'+
                                               '<button id="save_chart_config">Save Current Chart Configuration</button>'+
                                               '<button id="reset_chart_config">Reset Chart Configuration</button>'+
-                                              '<div id="chart_div_options">'+
+                                              '<div id="gc_chart_div_options">'+
                                                 '<ul>'+
                                                 '</ul>'+
                                               '</div>'+
@@ -523,8 +522,8 @@ graphtool.GC_COMMON.prototype.setup_options_menu = function(force_reload){
                                           '</div>');
     $("#save_chart_config").button().click(this.gc_save_cookie.bind(this));
     $("#reset_chart_config").button().click(this.gc_reset_cookie.bind(this));
-    this.chart_div_options_accordion =$("#chart_div_options_accordion");    
-    this.chart_div_options      = $("#chart_div_options");
+    this.chart_div_options_accordion =$("#gc_chart_div_options_accordion");    
+    this.chart_div_options      = $("#gc_chart_div_options");
     this.load_chart_options();
     this.chart_div_options.tabs();
     this.chart_div_options_accordion.accordion({

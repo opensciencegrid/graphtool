@@ -108,7 +108,7 @@ graphtool.JS_MAP.prototype.has = function(key){
   return false;
 };
 
-graphtool.JS_MAP.prototype.clear = function(obj){
+graphtool.JS_MAP.prototype.clear = function(){
   this.hash_table_key = {};
   this.hash_table_val = {};
   this.size           = 0;

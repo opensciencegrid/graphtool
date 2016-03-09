@@ -1,4 +1,4 @@
-include graphtool-0.8.0-py2.6.egg
+include graphtool-0.8.1-py2.6.egg
 include graphtool.spec
 recursive-include static_content *.css *.js *.png
 recursive-include examples *

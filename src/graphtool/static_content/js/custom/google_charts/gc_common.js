@@ -393,7 +393,14 @@ graphtool.GC_COMMON.prototype.drawChart = function() {
 
 graphtool.GC_COMMON.prototype.drawTable = function() {
   if(this.draw_table && this.table){
-    this.table.draw(this.data_gc, {});
+    this.table.draw(this.data_gc, {
+      page:'enable',
+      startPage: 0,
+      pageSize: 10,
+      showRowNumber:true,
+      frozenColumns:1
+      
+    });
   }
   else if(!this.draw_table && this.table){
     this.table.clearChart();
@@ -412,41 +419,44 @@ graphtool.GC_COMMON.prototype.set_chart_size = function(width,height){
 
 graphtool.GC_COMMON.prototype.open_image_as_png = function(){
   $("#temp_div_export").remove()
-  $('body').append('<div id="temp_div_export" style="display:none;"/>');//Hidden div for drawing
+  $('main_view').append('<div id="temp_div_export" style="display:none;"/>');//Hidden div for drawing
   var temp_div          = $("#temp_div_export");
   temp_div.append('<canvas id="temp_canvas_background"/>');
   var temp_canv         = $("#temp_canvas_background").get(0);
   temp_canv.width       = this.full_chart_div.width();
   temp_canv.height      = this.full_chart_div.height();
-  // Creates the initial canvas
-  html2canvas(this.full_chart_div.get(0), {
-    onrendered: function(canvas) {
-        var ctx = canvas.getContext('2d');
-        // Create and image loader to draw svg/xml
-        temp_div.append('<img id="temp_img_export_gc"/>');
-        var loader            = $("#temp_img_export_gc").get(0);
-        loader.width  = this.chart_div.width();
-        loader.height = this.chart_div.height();
-        // function called when the img element loads the svg/xml
-        loader.onload = function(){
-          // Clears the background of the google chart and draws it
-          ctx.fillStyle="#FFFFFF";
-          ctx.fillRect(0,0,loader.width,loader.height);
-          ctx.drawImage( loader, (this.full_chart_div.width()-loader.width)/2, this.title_div.height(), loader.width, loader.height );
-          // sets a background color for the image
-          var ctx_background = temp_canv.getContext('2d');
-          ctx_background.fillStyle="#FFFFFF";
-          ctx_background.fillRect(0,0,canvas.width,canvas.width);
-          ctx_background.drawImage(canvas, 0,0);
-          temp_canv.toBlob(function(blob){
-            saveAs(blob, "gratia-web-report.png");
-          },"image/png");
-        }.bind(this);
-        var svg_node = this.chart_div.find("svg");// Inline SVG element from google charts
-        var svgAsXML = (new XMLSerializer).serializeToString( svg_node.get(0) );
-        loader.src = 'data:image/svg+xml,' + encodeURIComponent( svgAsXML );        
-    }.bind(this)
-  });
+  $("main_view").scrollTop( 0 );
+  setTimeout(function(){
+    // Creates the initial canvas
+    html2canvas(this.full_chart_div.get(0), {
+      onrendered: function(canvas) {
+          var ctx = canvas.getContext('2d');
+          // Create and image loader to draw svg/xml
+          temp_div.append('<img id="temp_img_export_gc"/>');
+          var loader            = $("#temp_img_export_gc").get(0);
+          loader.width  = this.chart_div.width();
+          loader.height = this.chart_div.height();
+          // function called when the img element loads the svg/xml
+          loader.onload = function(){
+            // Clears the background of the google chart and draws it
+            ctx.fillStyle="#FFFFFF";
+            ctx.fillRect(0,this.title_div.height(),loader.width,loader.height);
+            ctx.drawImage( loader, (this.full_chart_div.width()-loader.width)/2, this.title_div.height(), loader.width, loader.height );
+            // sets a background color for the image
+            var ctx_background = temp_canv.getContext('2d');
+            ctx_background.fillStyle="#FFFFFF";
+            ctx_background.fillRect(0,0,canvas.width,canvas.height);
+            ctx_background.drawImage(canvas, 0,0);
+            temp_canv.toBlob(function(blob){
+              saveAs(blob, "gratia-web-report.png");
+            },"image/png");
+          }.bind(this);
+          var svg_node = this.chart_div.find("svg");// Inline SVG element from google charts
+          var svgAsXML = (new XMLSerializer).serializeToString( svg_node.get(0) );
+          loader.src = 'data:image/svg+xml,' + encodeURIComponent( svgAsXML );
+      }.bind(this)
+    });
+  }.bind(this), 2000);
 }
 
 //-------------------------------------------------------------------

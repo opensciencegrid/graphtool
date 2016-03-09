@@ -1,6 +1,6 @@
 
     <footer>
-      graphtool v0.8.0
+      graphtool v0.8.1
     </footer>
   </body>
 </html>

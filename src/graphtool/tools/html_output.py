@@ -4,13 +4,13 @@ Created on Jan 5, 2016
 '''
 import os
 from graphtool.database.queries import SqlQueries, SqlQuery
-print os.path.dirname(os.path.realpath(__file__))
 import json
 import numbers, datetime
 from matplotlib_2_google_charts import mpl_2_gc
 from graphtool.database.query_handler import CustomDecimalDateObjectJSONEncoder
 from mako.template import Template
 from mako.lookup import TemplateLookup
+import copy
 lookup = TemplateLookup(directories=[os.path.dirname(os.path.realpath(__file__))+'/mako_templates'])
 
 
@@ -20,6 +20,19 @@ from graphtool.tools.common import expand_string, to_timestamp, \
     convert_to_datetime
 
 class HtmlGenerator(QueryHandler):
+  
+  params_order = ['starttime',
+                  'endtime',
+                  'span',
+                  'resource-type',
+                  'vo',
+                  'facility',
+                  'projectname',
+                  'user',
+                  'exclude-vo',
+                  'exclude-facility',
+                  'exclude-projectname',
+                  'exclude-user']
   
   def get_common_template_data(self):
     common_data = lambda: None
@@ -105,8 +118,8 @@ class HtmlGenerator(QueryHandler):
     kw = metadata.get('given_kw',{})
     sql_vars = metadata.get('sql_vars',{})
     for key, item in kw.items():
-      if sql_vars.has_key(key) and sql_vars[key] != item:
-        arglist += str(key) + '=' + str(item) + '&'
+      #if sql_vars.has_key(key) and sql_vars[key] != item:
+      arglist += str(key) + '=' + str(item) + '&'
     return arglist
   
   def get_matplotlib_url(self,metadata):
@@ -142,7 +155,6 @@ class HtmlGenerator(QueryHandler):
     if graph_kind == 'google_charts':
       template_data.gc_script = graph_type
       template_data.js_chart_setup = js_chart_setup
-      print "--------------------%s"%template_data.gc_script
       if template_data.gc_script == "gc_tree_map":
         results_table = self.separate_table_rows(results_table, -2)
     else:
@@ -197,6 +209,19 @@ class HtmlGenerator(QueryHandler):
       pass
     return titles
   
+  def params_as_ordered_tuple_list(self,metadata):
+    given_params = copy.copy(metadata.get('given_kw',{}))
+    return_list = []
+    for param in HtmlGenerator.params_order:
+      if given_params.has_key(param):
+        return_list.append((param,given_params[param]))
+        given_params.pop(param)
+    ordered_given_params = sorted(given_params.keys())
+    for param in ordered_given_params:
+      return_list.append((param,given_params[param]))
+      given_params.pop(param)
+    return return_list
+  
   def handle_results(self, results, metadata, **kw):
     template_data                       = self.get_common_template_data()
     results_table                       = self.cumulate_table(results)
@@ -204,9 +229,8 @@ class HtmlGenerator(QueryHandler):
     results_table.insert(0, self.get_titles_row(results_table, metadata))
     results_table = self.set_gc_params(results_table,template_data, metadata)
     
-    template_data.params                = metadata.get('given_kw',{})
     template_data.params_defaults       = json.dumps(metadata.get('sql_vars',{}),separators=(',',':'),cls=CustomDecimalDateObjectJSONEncoder)
-    template_data.html_title            = expand_string( metadata.get('title',''), metadata.get('sql_vars','') )
+    template_data.html_title            = expand_string( metadata.get('title',''), metadata.get('given_kw',{}) )
     template_data.json_queries_desc     = json.dumps(self.get_queries_description(template_data.base_url),separators=(',',':'),cls=CustomDecimalDateObjectJSONEncoder)
     template_data.json_results_table    = json.dumps(results_table,separators=(',',':'),cls=CustomDecimalDateObjectJSONEncoder)
     template_data.json_metadata         = json.dumps(metadata,separators=(',',':'),indent=2,cls=CustomDecimalDateObjectJSONEncoder)
@@ -214,6 +238,7 @@ class HtmlGenerator(QueryHandler):
     template_data.csv_url               = self.get_csv_url(metadata)
     template_data.sql_string            = str(metadata.get('sql',''))
     tmpl                                = lookup.get_template("query.mako")
+    template_data.params                = self.params_as_ordered_tuple_list(metadata)
     return tmpl.render(tmpl_data=template_data)
 
   def handle_list( self, *args, **kw ):

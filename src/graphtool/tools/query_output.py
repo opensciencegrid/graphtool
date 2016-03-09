@@ -142,6 +142,7 @@ class XmlGenerator( QueryHandler ):
     graph_kind = metadata.get('graph_kind',False)
     js_chart_setup = metadata.get('js_chart_setup',False)
     
+    mpl_2_gc = {}
     metadata['translate_mp_2_gc'] = False
     if not graph_kind and mpl_2_gc.has_key(graph_type):
       maped_gc = mpl_2_gc[graph_type]

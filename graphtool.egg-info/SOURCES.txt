@@ -190,7 +190,6 @@ src/graphtool/tools/mako_templates/__init__.py
 src/graphtool/tools/mako_templates/footer.mako
 src/graphtool/tools/mako_templates/google_charts.mako
 src/graphtool/tools/mako_templates/header.mako
-src/graphtool/tools/mako_templates/index.mako
 src/graphtool/tools/mako_templates/query.mako
 src/graphtool/tools/mako_templates/query_list.mako
 src/graphtool/tools/mako_templates/query_matplotlib_img_dialog.mako

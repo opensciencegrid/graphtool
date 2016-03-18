@@ -228,9 +228,11 @@ class HtmlGenerator(QueryHandler):
     
     results_table.insert(0, self.get_titles_row(results_table, metadata))
     results_table = self.set_gc_params(results_table,template_data, metadata)
+    given_kw = metadata.get('given_kw',{})
+    title = given_kw.get('title',metadata.get('title',''))
     
     template_data.params_defaults       = json.dumps(metadata.get('sql_vars',{}),separators=(',',':'),cls=CustomDecimalDateObjectJSONEncoder)
-    template_data.html_title            = expand_string( metadata.get('title',''), metadata.get('given_kw',{}) )
+    template_data.html_title            = expand_string(title , given_kw)
     template_data.json_queries_desc     = json.dumps(self.get_queries_description(template_data.base_url),separators=(',',':'),cls=CustomDecimalDateObjectJSONEncoder)
     template_data.json_results_table    = json.dumps(results_table,separators=(',',':'),cls=CustomDecimalDateObjectJSONEncoder)
     template_data.json_metadata         = json.dumps(metadata,separators=(',',':'),indent=2,cls=CustomDecimalDateObjectJSONEncoder)

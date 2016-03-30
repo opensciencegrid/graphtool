@@ -13,6 +13,10 @@
   font-size     : 12px;
 }
 
+#gc_legend_div {
+  text-align: center;
+}
+
 /*
  * google charts convention table styles
  */
@@ -20,6 +24,27 @@ div.gc_conv_wraper {
   display           : flex;
   align-items       : center;
   background-color  : #fff;
+}
+
+div.gc_conv_quality_map_text {
+  font-size         : 16px;
+  color             : black;
+  position          : absolute;
+  height            : 100%;
+  border-left-color : black;
+  border-left-style : dashed;
+  border-left-color : black;
+  border-left-width : 1px;
+}
+
+div.gc_conv_quality_map_box {
+  border-style    : solid;
+  border-color    : black;
+  border-width    : 1px;
+  display         : inline-block;
+  height          : 20px;
+  width           : 80%;
+  position        : relative;
 }
 
 div.gc_conv_color_box {

@@ -31,6 +31,22 @@ graphtool.GC_QUALITY_MAP.prototype.get_legend_labels_and_values = function(){
   return [[],[]];
 }
 
+graphtool.GC_QUALITY_MAP.prototype.generate_html_legend = function(){
+  var color_min = graphtool.GC_COMMON.get_color_for_value(this.min_rgb,this.mid_rgb,this.max_rgb, 0.0,50.0,100.0,0.0);
+  var color_med = graphtool.GC_COMMON.get_color_for_value(this.min_rgb,this.mid_rgb,this.max_rgb, 0.0,50.0,100.0,50.0);
+  var color_max = graphtool.GC_COMMON.get_color_for_value(this.min_rgb,this.mid_rgb,this.max_rgb, 0.0,50.0,100.0,100.0);
+  
+  this.legend_div.empty();  
+  var html = "";
+  html+= "<div class='gc_conv_quality_map_box' style='background: linear-gradient(to right,"+color_min+","+color_med+","+color_max+");'>";
+  for(var i=0; i <= 10;i++){
+    html+="<div class='gc_conv_quality_map_text' style='left:"+(i*10)+"%;'>"+(i*10)+"%</div>";
+  }
+  html+= "</div>";
+  this.title_div.html("<h3>"+this.title+"</h3>");
+  this.legend_div.append(html);
+}
+
 graphtool.GC_QUALITY_MAP.prototype.set_colors = function(){
   this.chart_properties.colors   = this.color_list;
 }

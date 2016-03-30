@@ -122,5 +122,7 @@
   setSpanPicker('span');
   setYesNoPicker('exclude-empty-nulls-unkowns');
   setYesNoPicker('exclude-stopped');
+  setYesNoPicker('include-failed');
+  setYesNoPicker('include-success');
   setOpportunisticFilterPicker('opportunistic-filter');
   setHEPSpotOnDemandFilter('charge-type');

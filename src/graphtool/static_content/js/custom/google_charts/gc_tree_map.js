@@ -13,11 +13,12 @@ graphtool.GC_TREE_MAP = function(){
   this.formatters          = null;
   this.levels_order        = null;
   this.listen_events       = true;
+  this.tooltip_html_by_id  = new graphtool.JS_MAP();
 
   // Variables that are required for legend
   this.parent_row          = [-1];
-  this.child_row           = new Map();
-  this.row_size_color_vals = new Map();
+  this.child_row           = new graphtool.JS_MAP();
+  this.row_size_color_vals = new graphtool.JS_MAP();
   this.display_row         = 0;
   this.min_val             = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:null;
   this.max_val             = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:null;
@@ -260,9 +261,12 @@ graphtool.GC_TREE_MAP.prototype.json_tree_to_table = function(tree,parent,table,
   var parent_row_num = row_num;
   this.child_row.set(parent_row_num,[]);
   for(var key in tree){
-    var childs = tree[key]
-    var var_title = (pivot_titles.length > level) ? "<b>"+pivot_titles[level]+":</b>":"";
-    var id = parent+"<br/>"+var_title+(key? key:'UNKNOWN')
+    var childs = tree[key];
+    var var_title = (pivot_titles.length > level) ? ("/"+pivot_titles[level]+":"):"/";
+    var id = parent+"/"+var_title+(key? key:'UNKNOWN')
+    var var_title_html = (pivot_titles.length > level) ? ("<b>"+pivot_titles[level]+":</b>"):"";
+    var id_html = this.tooltip_html_by_id.get(parent)+"<br/>"+var_title_html+(key? key:'UNKNOWN');
+    this.tooltip_html_by_id.set(id,id_html);
     var node = {v:id, f:key? key:'UNKNOWN'}
     if(childs instanceof Array){
       if(childs.length >= 2){
@@ -300,10 +304,12 @@ graphtool.GC_TREE_MAP.prototype.table_group_to_table_tree = function (data_var,l
   
   var root;
   if(typeof this.title === "undefined" || !this.title)
-    root = ' ';
+    root = 'root';
   else
     root = this.title;
-  var root_id = '<b>'+root+'</b>';
+  var root_id = '/'+root;
+  this.tooltip_html_by_id.clear();
+  this.tooltip_html_by_id.set(root_id,'<b>'+root+'</b>');
   var table = [['Node',            'Parent',      this.results_titles[0],               this.results_titles[1]],
                [{v:root_id, f:root},    null,                 0,                               0]]
 
@@ -329,8 +335,8 @@ graphtool.GC_TREE_MAP.prototype.table_group_to_table_tree = function (data_var,l
 graphtool.GC_COMMON.prototype.calc_draw_table = function(){
   // Resets variables that are required for legend
   this.parent_row          = [-1];
-  this.child_row           = new Map();
-  this.row_size_color_vals = new Map();
+  this.child_row           = new graphtool.JS_MAP();
+  this.row_size_color_vals = new graphtool.JS_MAP();
   this.display_row         = 0;
   this.min_val             = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:null;
   this.max_val             = (typeof this.chart_properties.minColorValue !== 'undefined')? this.chart_properties.minColorValue:null;
@@ -369,7 +375,7 @@ graphtool.GC_TREE_MAP.prototype.include_level_order_options = function(){
     '  <b>Active Levels</b>'+
     '  <div id="sortable_active" class="active-inactive-connected-sortable">';
   var order = [];
-  var exclude = new Set();
+  var exclude = new graphtool.JS_SET();
   if(this.levels_order)
     order = this.levels_order;
   if(order && order.length > 0){
@@ -442,7 +448,7 @@ graphtool.GC_TREE_MAP.prototype.defaultToolTip = function(row, size, value) {
       this.max_val = value;
   }
   return '<div style="background:#fff; padding:5px; border-style:solid">' +
-         '  '+this.data_gc.getValue(row, 0)+'<br/>'+
+         '  '+this.tooltip_html_by_id.get(this.data_gc.getValue(row, 0))+'<br/>'+
          '  <b>'+this.data_gc.getColumnLabel(2)+':</b> '+this.formatters.size_formatter(size)+'<br/>'+
          '  <b>'+this.data_gc.getColumnLabel(3)+':</b> '+this.formatters.value_formatter(value)+'<br/>'+
          '</div>';

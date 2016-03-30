@@ -1,5 +1,6 @@
-var graphtool = {};
-
+if(typeof graphtool === "undefined" || graphtool === null)
+  var graphtool = {};
+  
 graphtool.GC_COMMON = function(){
   //-------------------------------------------------------------------
   // Common Variables
@@ -52,14 +53,15 @@ graphtool.GC_COMMON = function(){
   this.date_time_formatter         = null;//new google.visualization.DateFormat({ pattern: "yy/MM/dd HH:mm" });
   
   // ui-elements
-  this.full_chart_div              = $("#full_chart_div");
-  this.title_div                   = $("#title_div");
-  this.chart_div                   = $("#chart_div");
-  this.legend_div                  = $("#legend_div");
-  this.legend_table                = $("#legend_table");
-  this.footer_div                  = $("#footer_div");
-  this.chart_div_options           = null;// $("#chart_div_options"); Starts as null and gets assigned later
-  this.chart_div_options_accordion      = null;// $("#chart_div_options_accordion"); Starts as null and gets assigned later
+  this.full_chart_div              = $("#gc_full_chart_div");
+  this.title_div                   = $("#gc_title_div");
+  this.chart_div                   = $("#gc_chart_div");
+  this.legend_div                  = $("#gc_legend_div");
+  this.legend_table                = $("#gc_legend_table");
+  this.footer_div                  = $("#gc_legend_footer_div");
+  this.table_div                   = $('#gc_table_div');
+  this.chart_div_options           = null;// $("#gc_chart_div_options"); Starts as null and gets assigned later
+  this.chart_div_options_accordion = null;// $("#gc_chart_div_options_accordion"); Starts as null and gets assigned later
   this.chart_div_options_loaded    = false;
   
   if(typeof js_chart_setup !== "undefined" && js_chart_setup instanceof Function)
@@ -294,7 +296,7 @@ graphtool.GC_COMMON.prototype.load_google_callback = function() {
   this.date_time_formatter         = new google.visualization.DateFormat({ pattern: "yy/MM/dd HH:mm" });
   this.data_initial_setup();
   this.chart = new (google.visualization[this.get_object_type()].bind(google.visualization,this.chart_div.get(0)));
-  this.table = new google.visualization.Table(document.getElementById('table_div'));
+  this.table = new google.visualization.Table(this.table_div.get(0));
   this.post_chart_init();
   if(typeof this.chart_properties === "undefined"){
     this.chart_properties = {}
@@ -391,7 +393,14 @@ graphtool.GC_COMMON.prototype.drawChart = function() {
 
 graphtool.GC_COMMON.prototype.drawTable = function() {
   if(this.draw_table && this.table){
-    this.table.draw(this.data_gc, {});
+    this.table.draw(this.data_gc, {
+      page:'enable',
+      startPage: 0,
+      pageSize: 10,
+      showRowNumber:true,
+      frozenColumns:1
+      
+    });
   }
   else if(!this.draw_table && this.table){
     this.table.clearChart();
@@ -410,41 +419,44 @@ graphtool.GC_COMMON.prototype.set_chart_size = function(width,height){
 
 graphtool.GC_COMMON.prototype.open_image_as_png = function(){
   $("#temp_div_export").remove()
-  $('body').append('<div id="temp_div_export" style="display:none;"/>');//Hidden div for drawing
+  $('main_view').append('<div id="temp_div_export" style="display:none;"/>');//Hidden div for drawing
   var temp_div          = $("#temp_div_export");
   temp_div.append('<canvas id="temp_canvas_background"/>');
   var temp_canv         = $("#temp_canvas_background").get(0);
   temp_canv.width       = this.full_chart_div.width();
   temp_canv.height      = this.full_chart_div.height();
-  // Creates the initial canvas
-  html2canvas(this.full_chart_div.get(0), {
-    onrendered: function(canvas) {
-        var ctx = canvas.getContext('2d');
-        // Create and image loader to draw svg/xml
-        temp_div.append('<img id="temp_img_export_gc"/>');
-        var loader            = $("#temp_img_export_gc").get(0);
-        loader.width  = this.chart_div.width();
-        loader.height = this.chart_div.height();
-        // function called when the img element loads the svg/xml
-        loader.onload = function(){
-          // Clears the background of the google chart and draws it
-          ctx.fillStyle="#FFFFFF";
-          ctx.fillRect(0,0,loader.width,loader.height);
-          ctx.drawImage( loader, (this.full_chart_div.width()-loader.width)/2, this.title_div.height(), loader.width, loader.height );
-          // sets a background color for the image
-          var ctx_background = temp_canv.getContext('2d');
-          ctx_background.fillStyle="#FFFFFF";
-          ctx_background.fillRect(0,0,canvas.width,canvas.width);
-          ctx_background.drawImage(canvas, 0,0);
-          temp_canv.toBlob(function(blob){
-            saveAs(blob, "gratia-web-report.png");
-          },"image/png");
-        }.bind(this);
-        var svg_node = this.chart_div.find("svg");// Inline SVG element from google charts
-        var svgAsXML = (new XMLSerializer).serializeToString( svg_node.get(0) );
-        loader.src = 'data:image/svg+xml,' + encodeURIComponent( svgAsXML );        
-    }.bind(this)
-  });
+  $("main_view").scrollTop( 0 );
+  setTimeout(function(){
+    // Creates the initial canvas
+    html2canvas(this.full_chart_div.get(0), {
+      onrendered: function(canvas) {
+          var ctx = canvas.getContext('2d');
+          // Create and image loader to draw svg/xml
+          temp_div.append('<img id="temp_img_export_gc"/>');
+          var loader            = $("#temp_img_export_gc").get(0);
+          loader.width  = this.chart_div.width();
+          loader.height = this.chart_div.height();
+          // function called when the img element loads the svg/xml
+          loader.onload = function(){
+            // Clears the background of the google chart and draws it
+            ctx.fillStyle="#FFFFFF";
+            ctx.fillRect(0,this.title_div.height(),loader.width,loader.height);
+            ctx.drawImage( loader, (this.full_chart_div.width()-loader.width)/2, this.title_div.height(), loader.width, loader.height );
+            // sets a background color for the image
+            var ctx_background = temp_canv.getContext('2d');
+            ctx_background.fillStyle="#FFFFFF";
+            ctx_background.fillRect(0,0,canvas.width,canvas.height);
+            ctx_background.drawImage(canvas, 0,0);
+            temp_canv.toBlob(function(blob){
+              saveAs(blob, "gratia-web-report.png");
+            },"image/png");
+          }.bind(this);
+          var svg_node = this.chart_div.find("svg");// Inline SVG element from google charts
+          var svgAsXML = (new XMLSerializer).serializeToString( svg_node.get(0) );
+          loader.src = 'data:image/svg+xml,' + encodeURIComponent( svgAsXML );
+      }.bind(this)
+    });
+  }.bind(this), 2000);
 }
 
 //-------------------------------------------------------------------
@@ -458,7 +470,15 @@ graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(column_types)
   var i,j;
   var temp_date;
   for(var i = 0 ; i < this.data.length ; i++){
-    var pivot_n_results = this.data[i][0].concat(this.data[i][1]);
+    var pivot_n_results = [];
+    for(var k_index in this.data[i]){
+      var cell = this.data[i][k_index]
+      if(cell instanceof Array)
+        for(var n_index in cell)
+          pivot_n_results.push(cell[n_index]);
+      else
+        pivot_n_results.push(cell);
+    }
     if(i == 0){
       for(j=0;j<pivot_n_results.length;j++){
         var type = 'number'
@@ -495,16 +515,16 @@ graphtool.GC_COMMON.prototype.pivot_results_to_gc_table = function(column_types)
   
 graphtool.GC_COMMON.prototype.setup_options_menu = function(force_reload){
   if(typeof force_reload !== 'undefined' && force_reload==true){
-    $("#options_accordion_wrapper").empty();
+    $("#gc_options_accordion_wrapper").empty();
     this.chart_div_options_loaded = false;
   }
   if(!this.chart_div_options_loaded){
-    $("#options_accordion_wrapper").html(  '<div id="chart_div_options_accordion">'+
+    $("#gc_options_accordion_wrapper").html('<div id="gc_chart_div_options_accordion">'+
                                             '<h3>Chart &amp; Export Options:</h3>'+
-                                            '<div id="chart_div_options_accordion_inner_panel" style="overflow:visible">'+
+                                            '<div id="gc_chart_div_options_accordion_inner_panel" style="overflow:visible">'+
                                               '<button id="save_chart_config">Save Current Chart Configuration</button>'+
                                               '<button id="reset_chart_config">Reset Chart Configuration</button>'+
-                                              '<div id="chart_div_options">'+
+                                              '<div id="gc_chart_div_options">'+
                                                 '<ul>'+
                                                 '</ul>'+
                                               '</div>'+
@@ -512,8 +532,8 @@ graphtool.GC_COMMON.prototype.setup_options_menu = function(force_reload){
                                           '</div>');
     $("#save_chart_config").button().click(this.gc_save_cookie.bind(this));
     $("#reset_chart_config").button().click(this.gc_reset_cookie.bind(this));
-    this.chart_div_options_accordion =$("#chart_div_options_accordion");    
-    this.chart_div_options      = $("#chart_div_options");
+    this.chart_div_options_accordion =$("#gc_chart_div_options_accordion");    
+    this.chart_div_options      = $("#gc_chart_div_options");
     this.load_chart_options();
     this.chart_div_options.tabs();
     this.chart_div_options_accordion.accordion({

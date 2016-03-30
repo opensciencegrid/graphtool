@@ -115,6 +115,10 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         </xsl:otherwise>
       </xsl:choose>
 
+      <xsl:variable name="html_url" select="concat(substring-before(attr[@name='base_url'], 'xml'), 'html', '/', @name, '?', substring-after(url, '?'))"/>
+      <br/>
+      <a href="{$html_url}">View Google Charts site</a>
+      
       <h3> Variables </h3>
       <form method="get" action="{@name}">
         <table border="1">

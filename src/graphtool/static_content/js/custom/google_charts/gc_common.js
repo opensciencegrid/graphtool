@@ -130,10 +130,10 @@ graphtool.GC_COMMON.get_color_for_value = function(min_c,mid_c,max_c,min_v,mid_v
 
 graphtool.GC_COMMON.from_unix_utc_ts = function(ts){
   // Daylight Savings
-  // Should initialize the date with the timestamp to obtain the offset of that specific time
-  var temp_date = new Date(ts*1000);
-  temp_date.setTime(ts*1000+temp_date.getTimezoneOffset()*60*1000);
-  return temp_date;
+  // the dates come in UTC
+  var momt = moment.utc(ts*1000);
+  var dt = new Date(momt.year(), momt.month(), momt.date(), momt.hours(), momt.minutes(), momt.seconds(), momt.milliseconds());
+  return dt;
 }
         
 // cumulative function must bind the column before usage
@@ -300,7 +300,8 @@ graphtool.GC_COMMON.prototype.load_google_api_and_draw = function() {
     this.chart_div.css('height','');
   }
   else{
-    google.load("visualization", "1", {packages:["table"].concat(this.get_required_google_pkgs()), callback: this.load_google_callback.bind(this)});
+    google.charts.load('44', {packages:["table"].concat(this.get_required_google_pkgs())});
+    google.charts.setOnLoadCallback(this.load_google_callback.bind(this));
   }
 }
 

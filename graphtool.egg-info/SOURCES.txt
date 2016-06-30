@@ -143,6 +143,7 @@ src/graphtool/static_content/js/other/FileSaver.min.js
 src/graphtool/static_content/js/other/__init__.py
 src/graphtool/static_content/js/other/canvas-toBlob.js
 src/graphtool/static_content/js/other/html2canvas.js
+src/graphtool/static_content/js/other/moment.min.js
 src/graphtool/static_content/js/other/papaparse.min.js
 src/graphtool/static_content/xml_results_templates/__init__.py
 src/graphtool/static_content/xml_results_templates/google_charts.xsl

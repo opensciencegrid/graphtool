@@ -11,6 +11,8 @@
     <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/jquery-ui.min.css"/>
     <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/jquery.datetimepicker.css"/>
     <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/ext/choosen/chosen.min.css"/>
+    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/ext/choosen/chosen.min.css"/>
+    <link rel="stylesheet" type="text/css" href="${tmpl_data.static_base_url}/js/jquery/ext/spectrum/spectrum.css"/>
     
     <!-- Javascript files loading -->
     <script type="text/javascript" src="${tmpl_data.static_base_url}/js/jquery/jquery-1.11.2.min.js">
@@ -22,6 +24,8 @@
     <script type="text/javascript" src="${tmpl_data.static_base_url}/js/numeral/numeral.min.js">
     </script>
     <script type="text/javascript" src="${tmpl_data.static_base_url}/js/jquery/ext/choosen/chosen.jquery.min.js">
+    </script>
+    <script type="text/javascript" src="${tmpl_data.static_base_url}/js/jquery/ext/spectrum/spectrum.js">
     </script>
     <script type="text/javascript" src="${tmpl_data.static_base_url}/js/custom/graphtool_common.js">
     </script>

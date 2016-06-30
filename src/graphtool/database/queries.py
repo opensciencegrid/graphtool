@@ -67,6 +67,24 @@ class SqlQueries( DatabaseInfoV2 ):
     setattr( self, name, query_obj )
     self.commands[name] = name
 
+queries_found = {}
+
+def add_query(base_q,new_q):
+  if base_q is None:
+    queries_found[new_q.metadata['name']] = {}
+    return
+  cur_level = [queries_found] 
+  next_level = []
+  while len(cur_level) > 0:
+    for dict_i in cur_level:
+      if dict_i.has_key(base_q.metadata['name']):
+        dict_i[base_q.metadata['name']][new_q.metadata['name']] = {}
+        return
+      next_level += dict_i.values()
+    cur_level  = next_level
+    next_level = []
+  
+
 class SqlQuery( XmlConfig ):
 
   def __init__( self, query_dom, sqlQueries ):

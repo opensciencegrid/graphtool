@@ -21,6 +21,13 @@ from graphtool.tools.common import expand_string, to_timestamp, \
 
 class HtmlGenerator(QueryHandler):
   
+  def __init__( self, *args, **kw ):
+    super( HtmlGenerator, self ).__init__( *args, **kw )
+    for query in self.objs:
+        query.metadata['html_generator'] = self
+    for query in self.known_commands.values():
+        query.metadata['html_generator'] = self
+        
   params_order = ['starttime',
                   'endtime',
                   'span',
@@ -133,15 +140,19 @@ class HtmlGenerator(QueryHandler):
 
   def get_csv_url(self,metadata):
     base_url = None
-    graphs   = metadata.get('csv_generator',None)
-    if graphs is None:
+    csv_out   = metadata.get('csv_generator',None)
+    if csv_out is None:
       return None
-    if graphs and 'base_url' in graphs.metadata:
-        base_url = graphs.metadata['base_url']
+    if csv_out and 'base_url' in csv_out.metadata:
+        base_url = csv_out.metadata['base_url']
     return base_url + '/' + metadata.get('name','') + '?'+self.get_arg_list(metadata)
   
   def set_gc_params(self,results_table,template_data,metadata):
     graph_type = metadata.get('graph_type',False)
+    next_parent = metadata["query"].base
+    while not graph_type and next_parent is not None:
+      graph_type = next_parent.metadata.get('graph_type',False)
+      next_parent = next_parent.base
     graph_kind = metadata.get('graph_kind',False)
     js_chart_setup = metadata.get('js_chart_setup',False)
     
@@ -230,6 +241,8 @@ class HtmlGenerator(QueryHandler):
     results_table = self.set_gc_params(results_table,template_data, metadata)
     given_kw = metadata.get('given_kw',{})
     title = given_kw.get('title',metadata.get('title',''))
+    no_frame = given_kw.get('no_html_frame',False) in ['true', '1', 't', 'y', 'yes', 'TRUE', 'True', 'YES']
+    given_kw['title']=title
     
     template_data.params_defaults       = json.dumps(metadata.get('sql_vars',{}),separators=(',',':'),cls=CustomDecimalDateObjectJSONEncoder)
     template_data.html_title            = expand_string(title , given_kw)
@@ -239,7 +252,10 @@ class HtmlGenerator(QueryHandler):
     template_data.matplotlib_image_url  = self.get_matplotlib_url(metadata)
     template_data.csv_url               = self.get_csv_url(metadata)
     template_data.sql_string            = str(metadata.get('sql',''))
-    tmpl                                = lookup.get_template("query.mako")
+    if no_frame:
+      tmpl                              = lookup.get_template("query_no_frame.mako")
+    else:
+      tmpl                              = lookup.get_template("query.mako")
     template_data.params                = self.params_as_ordered_tuple_list(metadata)
     return tmpl.render(tmpl_data=template_data)
 

@@ -243,6 +243,27 @@ graphtool.GC_COMMON.prototype.gc_reset_cookie =  function(){
 // Common Drawing and Google Charts functions 
 //-------------------------------------------------------------------
 
+graphtool.GC_COMMON.prototype.download_csv = function() {
+  if(this.data_gc){
+    var data_array = [];
+    var column_titles = [];
+    for(var j = 0 ; j < this.data_gc.getNumberOfColumns() ; j++){
+      column_titles.push(this.data_gc.getColumnLabel(j));
+    }
+    data_array.push(column_titles);
+    for(var i = 0 ; i < this.data_gc.getNumberOfRows() ; i++){
+      var row = [];
+      for(j = 0 ; j < this.data_gc.getNumberOfColumns() ; j++){
+        row.push(this.data_gc.getFormattedValue(i,j));
+      }
+      data_array.push(row);
+    }
+    var csv = Papa.unparse(data_array);
+    var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+    saveAs(blob, "gratia-web-chart_data.csv");
+  }
+};
+
 // Requires Override
 graphtool.GC_COMMON.prototype.get_required_google_pkgs = function() {
   alert("Not google charts packages defined!");
@@ -331,8 +352,8 @@ graphtool.GC_COMMON.prototype.generate_html_legend = function(){
   for(var i = 0 ; i < labels_list.length ; i++){
     var label = labels_list[i];
     var value = (values_defined && i < values_list.length)? values_list[i]:null;
-    var color = colors[i%colors.length]
-    if((i)%columns == 0)    
+    var color = colors[i%colors.length];
+    if((i)%columns == 0)
       html += "<tr>";
     html += "<td style='width:"+col_width+"px'>"+
                "<div class='gc_conv_wraper'>"+
@@ -555,6 +576,7 @@ graphtool.GC_COMMON.prototype.include_size_options = function(){
     '<div>'+
     '<b>Width('+this.min_dimensions_px+'px,'+this.max_dimensions_px+'px):</b><span id="width-label">'+this.chart_div.width()+'</span><div id="chart-width" style="width:300px"></div><br/>'+
     '<b>Height('+this.min_dimensions_px+'px,'+this.max_dimensions_px+'px):</b><span id="height-label">'+this.chart_div.height()+'</span><div id="chart-height" style="width:300px"></div><br/>'+
+    '<button id="decrease_font_size">Decrease font size</button><button id="increase_font_size">Increase font size</button><br/>'+
     '</div>';
   this.include_options_tab("chart_dimensions","Chart Size",html_code)
   $("#chart-width").slider({ 
@@ -570,6 +592,12 @@ graphtool.GC_COMMON.prototype.include_size_options = function(){
       value:   this.chart_div.height(),
       change:  function( event, ui ){this.set_chart_size(-1,ui.value);}.bind(this),
       slide:   function( event, ui ){$("#height-label").text( ui.value );}.bind(this)
+  });
+  $("#decrease_font_size").button().click(function(){
+    $("#gc_full_chart_div").css("font-size","-=1px");
+  });
+  $("#increase_font_size").button().click(function(){
+    $("#gc_full_chart_div").css("font-size","+=1px");
   });
 }
 
@@ -594,6 +622,13 @@ graphtool.GC_COMMON.prototype.include_table_options = function (){
     function(){
       return (this.draw_table);
     }.bind(this));
+  var html_code = "<button id='gc_download_table_csv'>Download Table CSV</button><br/>";
+  $("#table_ops").append(html_code);
+  $("#gc_download_table_csv")
+      .button()
+      .click(function( event ) {
+          this.download_csv();
+      }.bind(this));
 }
 
 graphtool.GC_COMMON.prototype.include_color_n_border_options = function (){
@@ -613,7 +648,7 @@ graphtool.GC_COMMON.prototype.include_color_n_border_options = function (){
     }.bind(this),
     function(){
       return (this.draw_border);
-    }.bind(this));  
+    }.bind(this));
 }
 
 graphtool.GC_COMMON.prototype.include_others_options = function(){

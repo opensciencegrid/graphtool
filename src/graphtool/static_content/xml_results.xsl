@@ -350,6 +350,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <link rel="stylesheet" type="text/css">
       <xsl:attribute name="href"> <xsl:value-of select="$static_base_url"/>/js/jquery/ext/choosen/chosen.min.css</xsl:attribute>
     </link>
+    <link rel="stylesheet" type="text/css">
+      <xsl:attribute name="href"> <xsl:value-of select="$static_base_url"/>/js/jquery/ext/spectrum/spectrum.css</xsl:attribute>
+    </link>
     
     <!-- Javascript files loading -->
     <script type="text/javascript">
@@ -366,6 +369,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     </script>
     <script type="text/javascript">
       <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/jquery/ext/choosen/chosen.jquery.min.js</xsl:attribute>
+    </script>
+    <script type="text/javascript">
+      <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/jquery/ext/spectrum/spectrum.js</xsl:attribute>
     </script>
   
     <!-- Custom Javascript  -->

@@ -31,6 +31,8 @@
         </script>
         <script type="text/javascript" src="${tmpl_data.static_base_url}/js/other/FileSaver.min.js">
         </script>
+        <script type="text/javascript" src="${tmpl_data.static_base_url}/js/other/papaparse.min.js">
+        </script>
         
         <!-- JAVASCRIPT -->
         <script type="text/javascript" src="https://www.google.com/jsapi">

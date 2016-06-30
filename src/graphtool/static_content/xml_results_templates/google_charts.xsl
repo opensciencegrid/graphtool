@@ -19,6 +19,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <script type="text/javascript">
     <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/other/FileSaver.min.js</xsl:attribute>
   </script>
+  <script type="text/javascript">
+    <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/other/papaparse.min.js</xsl:attribute>
+  </script>
   <script type="text/javascript" >
     <xsl:attribute name="src"><xsl:value-of select="$static_base_url"/>/js/custom/graphtool_common.js</xsl:attribute>
   </script>

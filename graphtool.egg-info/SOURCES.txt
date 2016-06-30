@@ -89,6 +89,9 @@ src/graphtool/static_content/js/jquery/ext/choosen/chosen-sprite.png
 src/graphtool/static_content/js/jquery/ext/choosen/chosen-sprite@2x.png
 src/graphtool/static_content/js/jquery/ext/choosen/chosen.jquery.min.js
 src/graphtool/static_content/js/jquery/ext/choosen/chosen.min.css
+src/graphtool/static_content/js/jquery/ext/spectrum/__init__.py
+src/graphtool/static_content/js/jquery/ext/spectrum/spectrum.css
+src/graphtool/static_content/js/jquery/ext/spectrum/spectrum.js
 src/graphtool/static_content/js/jquery/images/__init__.py
 src/graphtool/static_content/js/jquery/images/ui-bg_diagonals-thick_18_b81900_40x40.png
 src/graphtool/static_content/js/jquery/images/ui-bg_diagonals-thick_20_666666_40x40.png
@@ -140,6 +143,8 @@ src/graphtool/static_content/js/other/FileSaver.min.js
 src/graphtool/static_content/js/other/__init__.py
 src/graphtool/static_content/js/other/canvas-toBlob.js
 src/graphtool/static_content/js/other/html2canvas.js
+src/graphtool/static_content/js/other/moment.min.js
+src/graphtool/static_content/js/other/papaparse.min.js
 src/graphtool/static_content/xml_results_templates/__init__.py
 src/graphtool/static_content/xml_results_templates/google_charts.xsl
 src/graphtool/tools/__init__.py
@@ -157,7 +162,9 @@ src/graphtool/tools/mako_templates/google_charts.mako
 src/graphtool/tools/mako_templates/header.mako
 src/graphtool/tools/mako_templates/query.mako
 src/graphtool/tools/mako_templates/query_list.mako
-src/graphtool/tools/mako_templates/query_matplotlib_img_dialog.mako
+src/graphtool/tools/mako_templates/query_no_frame.mako
+src/graphtool/tools/selenium/__init__.py
+src/graphtool/tools/selenium/gc_server_img_generator.py
 src/graphtool/utilities/__init__.py
 src/graphtool/utilities/graphtool_cli.py
 src/graphtool/web/__init__.py

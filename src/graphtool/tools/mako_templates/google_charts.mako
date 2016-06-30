@@ -31,8 +31,13 @@
         </script>
         <script type="text/javascript" src="${tmpl_data.static_base_url}/js/other/FileSaver.min.js">
         </script>
+        <script type="text/javascript" src="${tmpl_data.static_base_url}/js/other/papaparse.min.js">
+        </script>
+        <script type="text/javascript" src="${tmpl_data.static_base_url}/js/other/moment.min.js">
+        </script>
         
         <!-- JAVASCRIPT -->
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script type="text/javascript" src="https://www.google.com/jsapi">
         </script>
         <script type="text/javascript"  src="${tmpl_data.static_base_url}/js/custom/google_charts/gc_common.js">

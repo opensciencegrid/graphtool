@@ -13,13 +13,13 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'graphtool',
-    version = '0.8.1',
+    version = '0.9.0',
     description = 'CMS Common Graphing Package',
     author = 'Brian Bockelman',
     author_email = "bbockelm@cse.unl.edu",
     url="http://t2.unl.edu/documentation/gratia_graphs",
 
-    packages = ['graphtool', 'graphtool.utilities', 'graphtool.tools', 'graphtool.base', 'graphtool.web', \
+    packages = ['graphtool', 'graphtool.utilities', 'graphtool.tools', 'graphtool.tools.selenium', 'graphtool.base', 'graphtool.web', \
                     'graphtool.graphs', 'graphtool.database', 'graphtool.static_content'],
     package_dir = {'graphtool':'src/graphtool'},
     package_data = {'':['*.py',

@@ -435,6 +435,97 @@ graphtool.GC_TREE_MAP.prototype.include_level_order_options = function(){
     }.bind(this));
 }
 
+//Index
+//0 - min
+//1 - mid
+//2 - max
+graphtool.GC_TREE_MAP.prototype.change_color = function(color,index){
+  if(index == 0){
+    this.chart_properties.minColor           = color;
+  }
+  else if(index == 1){
+    this.chart_properties.midColor           = color;
+  }
+  else if(index == 2){
+    this.chart_properties.maxColor           = color;
+  }
+  else{
+    return;
+  }
+  this.min_color           = (typeof this.chart_properties.minColor !== 'undefined')? this.chart_properties.minColor:'#dd0000';
+  this.mid_color           = (typeof this.chart_properties.midColor !== 'undefined')? this.chart_properties.midColor:'#000000';
+  this.max_color           = (typeof this.chart_properties.maxColor !== 'undefined')? this.chart_properties.maxColor:'#00dd00';
+}
+
+graphtool.GC_TREE_MAP.prototype.include_tree_color_options = function(){
+  var html_code = 
+    '<b>Min Color (0%)</b><br/>'+
+    '<input type="text" id="gc_min_color" /><br/>'+
+    '<b>Mid Color (50%)</b><br/>'+
+    '<input type="text" id="gc_mid_color" /><br/>'+
+    '<b>Max Color (100%)</b><br/>'+
+    '<input type="text" id="gc_max_color" /><br/>'+
+    '<button id="gc_re_draw_colors">Draw Plot</button>';
+    
+  this.include_options_tab("gc_tree_colors","Percentage Colors",html_code);
+  
+  var palette = [
+  ["#000","#444","#666","#999","#ccc","#eee","#f3f3f3","#fff"],
+  ["#f00","#f90","#ff0","#0f0","#0ff","#00f","#90f","#f0f"],
+  ["#f4cccc","#fce5cd","#fff2cc","#d9ead3","#d0e0e3","#cfe2f3","#d9d2e9","#ead1dc"],
+  ["#ea9999","#f9cb9c","#ffe599","#b6d7a8","#a2c4c9","#9fc5e8","#b4a7d6","#d5a6bd"],
+  ["#e06666","#f6b26b","#ffd966","#93c47d","#76a5af","#6fa8dc","#8e7cc3","#c27ba0"],
+  ["#c00","#e69138","#f1c232","#6aa84f","#45818e","#3d85c6","#674ea7","#a64d79"],
+  ["#900","#b45f06","#bf9000","#38761d","#134f5c","#0b5394","#351c75","#741b47"],
+  ["#600","#783f04","#7f6000","#274e13","#0c343d","#073763","#20124d","#4c1130"]];
+  
+  $("#gc_min_color").spectrum({
+    preferredFormat: "hex",
+    color:this.min_color,
+    flat: false,
+    showInput: true,
+    allowEmpty:false,
+    showPalette: true,
+    showAlpha: false,
+    palette: palette
+  });
+  
+  $("#gc_mid_color").spectrum({
+    preferredFormat: "hex",
+    color:this.mid_color,
+    flat: false,
+    showInput: true,
+    allowEmpty:false,
+    showPalette: true,
+    showAlpha: false,
+    palette: palette
+  });  
+  
+  $("#gc_max_color").spectrum({
+    preferredFormat: "hex",
+    color:this.max_color,
+    flat: false,
+    showInput: true,
+    allowEmpty:false,
+    showPalette: true,
+    showAlpha: false,
+    palette: palette
+  });  
+  
+  $("#gc_min_color").change(function(){
+    this.change_color($("#gc_min_color").val(),0);
+  }.bind(this));
+  $("#gc_mid_color").change(function(){
+    this.change_color($("#gc_mid_color").val(),1);
+  }.bind(this));  
+  $("#gc_max_color").change(function(){
+    this.change_color($("#gc_max_color").val(),2);
+  }.bind(this));
+  $("#gc_re_draw_colors").button().click(function(){
+    this.drawChart();
+  }.bind(this));
+}
+
 //-------------------------------------------------------------------
 // Charts functions 
 //-------------------------------------------------------------------
@@ -466,6 +557,7 @@ graphtool.GC_TREE_MAP.prototype.load_chart_options = function() {
   this.load_default_options_tabs();
   this.include_table_options();
   this.include_level_order_options();
+  this.include_tree_color_options();
 }
 
 graphtool.GC_TREE_MAP.prototype.data_initial_setup = function() {

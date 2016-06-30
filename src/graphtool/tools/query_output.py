@@ -7,8 +7,6 @@ import json
 from graphtool.database.query_handler import CustomDecimalDateObjectJSONEncoder
 from graphtool.tools.matplotlib_2_google_charts import mpl_2_gc
 
-
-
 # See if we can use the multiprocessing module in order to offload the CPU
 # heavy graph generations to another process.
 

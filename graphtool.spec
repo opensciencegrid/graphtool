@@ -4,8 +4,8 @@
 %endif
 
 Name:                   graphtool
-Version:                0.8.1
-Release:                1%{?dist}
+Version:                0.9.0
+Release:                19%{?dist}
 Summary:                CMS Common Graphing Package.
 
 Group:                  Development/Libraries

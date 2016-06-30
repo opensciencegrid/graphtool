@@ -333,7 +333,11 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    
+    <!-- Redirect to html site -->
+    <xsl:if  test="query/url != ''">
+      <xsl:variable name="replace_html_url" select="concat(substring-before(query/attr[@name='base_url'], 'xml'), 'html', '/', query/@name, '?', substring-after(query/url, '?'))"/>
+      <meta http-equiv="refresh" content="0; url={$replace_html_url}" />
+    </xsl:if>
     <!-- Title -->
     <title><xsl:value-of select="html_title"/></title>
     
